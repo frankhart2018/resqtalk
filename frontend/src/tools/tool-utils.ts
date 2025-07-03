@@ -16,16 +16,21 @@ interface ToolParameters {
     required: string[];
 }
 
+interface ResultConst {
+    result: string;
+}
+
 interface Tool {
     name: string;
     description: string;
     parameters: ToolParameters;
     fun: ToolFunction;
+    result: ResultConst | null;
 }
 
 const TOOLS: Tool[] = [];
 
-export const registerTool = (toolName: string, description: string, parameters: FormalParameter[], fun: ToolFunction) => {
+export const registerTool = (toolName: string, description: string, parameters: FormalParameter[], result: ResultConst | null, fun: ToolFunction) => {
     TOOLS.push(
         {
             name: toolName,
@@ -38,7 +43,8 @@ export const registerTool = (toolName: string, description: string, parameters: 
                 }, {}),
                 required: parameters.filter((parameter) => parameter.required).map((parameter) => parameter.name)
             },
-            fun
+            fun,
+            result,
         }
     );
 }
@@ -56,14 +62,19 @@ should match EXACTLY one of these functions at a time:
 ${tools}`;
 }
 
-export const executeToolCall = (name: string, params: Record<string, unknown>): boolean => {
+export const executeToolCall = (name: string, params: Record<string, unknown>): string | null => {
     const tool = TOOLS.filter((tool: Tool) => tool.name === name);
     if (tool.length !== 1) {
         console.error("Failed tool call, matching either multiple tools or matched none!");
-        return false;
+        return null;
     }
 
     const callingTool = tool[0];
-    callingTool.fun(params);
-    return true;
+
+    if (callingTool.result === null) {
+        callingTool.fun(params);
+        return "";
+    }
+
+    return callingTool.result.result;
 }

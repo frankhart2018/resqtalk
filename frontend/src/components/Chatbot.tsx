@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import './Chatbot.css';
 import ThemeToggle from './ThemeToggle';
 import { executeToolCall, getPromptWithTools } from '../tools/tool-utils';
+import { getLocation, LOCATION_RESULT } from '../tools/location-tools';
 
 const Chatbot: React.FC = () => {
   const [messages, setMessages] = useState<{ text: string; sender: 'user' | 'bot' }[]>([]);
@@ -32,12 +33,20 @@ const Chatbot: React.FC = () => {
         const response = await axios.post(`${apiHost}/prompt`, { prompt: promptString });
         console.log(promptString);
         console.log(response.data);
+        getLocation();
+        console.log(LOCATION_RESULT.result);
 
         try {
           const parsedResponse = JSON.parse(response.data.response);
           console.log(`Found tool call: ${parsedResponse}`);
-          if (executeToolCall(parsedResponse['name'], parsedResponse['parameters'])) {
-            setMessages(prevMessages => [...prevMessages, { text: `Ok, executing tool: ${parsedResponse['name']}`, sender: 'bot' }]);
+          const toolCallResult = executeToolCall(parsedResponse['name'], parsedResponse['parameters']);
+          console.log(`Tool call result: ${toolCallResult}`);
+          if (toolCallResult !== null) {
+            if (toolCallResult !== "") {
+              setMessages(prevMessages => [...prevMessages, { text: toolCallResult, sender: 'bot' }])
+            } else {
+              setMessages(prevMessages => [...prevMessages, { text: `Ok, executing tool: ${parsedResponse['name']}`, sender: 'bot' }]);
+            }
           } else {
             throw new Error("Failed tool call!")
           }
