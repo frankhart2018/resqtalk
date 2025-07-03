@@ -56,7 +56,13 @@ export const registerTool = (
 };
 
 export const getPromptWithTools = (): string => {
-  const tools = JSON.stringify(TOOLS, null, 2);
+  const tools = JSON.stringify(
+    TOOLS.map((tool: Tool) => {
+      return { ...tool, result: null };
+    }),
+    null,
+    2
+  );
   return `You have access to functions. If you decide to invoke any of the function(s),
 you MUST put it in the format of
 {"name": function name, "parameters": dictionary of argument name and its value}
@@ -81,10 +87,6 @@ export const executeToolCall = (
   }
 
   const callingTool = tool[0];
-
-  if (callingTool.result !== null) {
-    callingTool.result.result = "";
-  }
   callingTool.fun(params);
 
   return callingTool.result !== null ? callingTool.result.result : "";
