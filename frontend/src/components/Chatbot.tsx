@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './Chatbot.css';
 import ThemeToggle from './ThemeToggle';
+import { executeToolCall, getPromptWithTools } from '../tools/tool-utils';
 
 const Chatbot: React.FC = () => {
   const [messages, setMessages] = useState<{ text: string; sender: 'user' | 'bot' }[]>([]);
@@ -26,9 +27,20 @@ const Chatbot: React.FC = () => {
       setInputValue('');
       setIsLoading(true);
       try {
+        const promptString = `${getPromptWithTools()}\n\n${inputValue}`;
         const apiHost = import.meta.env.VITE_API_HOST || `http://${window.location.hostname}:8000`;
-        const response = await axios.post(`${apiHost}/prompt`, { prompt: inputValue });
-        setMessages(prevMessages => [...prevMessages, { text: response.data.response, sender: 'bot' }]);
+        const response = await axios.post(`${apiHost}/prompt`, { prompt: promptString });
+        console.log(promptString);
+
+        try {
+          const parsedResponse = JSON.parse(response.data.response);
+          console.log(`Found tool call: ${parsedResponse}`);
+          executeToolCall(parsedResponse['name'], parsedResponse['parameters']);
+          setMessages(prevMessages => [...prevMessages, { text: `Ok, executing tool: ${parsedResponse['name']}`, sender: 'bot' }]);
+        } catch {
+          setMessages(prevMessages => [...prevMessages, { text: response.data.response, sender: 'bot' }]);
+        }
+
       } catch (error) {
         console.error('Error sending message:', error);
         setMessages(prevMessages => [...prevMessages, { text: 'Error: Could not get a response from the bot.', sender: 'bot' }]);
