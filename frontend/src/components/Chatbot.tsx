@@ -31,12 +31,16 @@ const Chatbot: React.FC = () => {
         const apiHost = import.meta.env.VITE_API_HOST || `http://${window.location.hostname}:8000`;
         const response = await axios.post(`${apiHost}/prompt`, { prompt: promptString });
         console.log(promptString);
+        console.log(response.data);
 
         try {
           const parsedResponse = JSON.parse(response.data.response);
           console.log(`Found tool call: ${parsedResponse}`);
-          executeToolCall(parsedResponse['name'], parsedResponse['parameters']);
-          setMessages(prevMessages => [...prevMessages, { text: `Ok, executing tool: ${parsedResponse['name']}`, sender: 'bot' }]);
+          if (executeToolCall(parsedResponse['name'], parsedResponse['parameters'])) {
+            setMessages(prevMessages => [...prevMessages, { text: `Ok, executing tool: ${parsedResponse['name']}`, sender: 'bot' }]);
+          } else {
+            throw new Error("Failed tool call!")
+          }
         } catch {
           setMessages(prevMessages => [...prevMessages, { text: response.data.response, sender: 'bot' }]);
         }
