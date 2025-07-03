@@ -26,7 +26,7 @@ const Chatbot: React.FC = () => {
       setInputValue('');
       setIsLoading(true);
       try {
-        const apiHost = import.meta.env.VITE_API_HOST || 'http://localhost:8000';
+        const apiHost = import.meta.env.VITE_API_HOST || `http://${window.location.hostname}:8000`;
         const response = await axios.post(`${apiHost}/prompt`, { prompt: inputValue });
         setMessages(prevMessages => [...prevMessages, { text: response.data.response, sender: 'bot' }]);
       } catch (error) {
