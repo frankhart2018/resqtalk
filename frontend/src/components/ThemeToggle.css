@@ -1,0 +1,8 @@
+.theme-toggle {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+}

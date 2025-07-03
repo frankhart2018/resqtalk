@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    image: resqtalk-backend
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    image: resqtalk-frontend
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11435:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    
