@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import uuid
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,19 +7,23 @@ from pydantic import BaseModel
 from typing import Optional
 
 from service.model.llm import GemmaLLMClient
+from service.utils.prompts_store import PromptsStore
 
 
 llm_client: Optional[GemmaLLMClient] = None
+prompts_store: Optional[PromptsStore] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-    global llm_client
+    global llm_client, prompts_store
     llm_client = GemmaLLMClient()
+    prompts_store = PromptsStore()
     yield
     # Clean up the ML models and release the resources
     llm_client = None
+    prompts_store = None
 
 
 app = FastAPI(lifespan=lifespan)
@@ -38,7 +43,10 @@ class PromptRequest(BaseModel):
 @app.post("/prompt")
 async def generate_prompt(request: PromptRequest):
     response = llm_client.generate(request.prompt)
-    return {"response": response}
+    prompt_id = prompts_store.store_prompt_and_result(
+        prompt=request.prompt, response=response
+    )
+    return {"response": response, "promptId": prompt_id}
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   backend:
@@ -8,6 +8,10 @@ services:
     image: resqtalk-backend
     environment:
       OLLAMA_HOST: http://ollama:11434
+      MONGO_HOST: mongodb://mongo:27017/
+    depends_on:
+      - ollama
+      - mongo
 
   frontend:
     build: ./frontend
@@ -21,4 +25,8 @@ services:
       - "11435:11434"
     volumes:
       - ./ollama_data:/root/.ollama
-    
+
+  mongo:
+    image: mongo:bionic
+    ports:
+      - "27017:27017"
