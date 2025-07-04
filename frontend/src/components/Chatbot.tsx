@@ -33,6 +33,7 @@ const Chatbot: React.FC = () => {
         const response = await axios.post(`${apiHost}/prompt`, { prompt: promptString });
         console.log(promptString);
         console.log(response.data);
+        const promptId = response.data.promptId;
         getLocation();
         console.log(LOCATION_RESULT.result);
 
@@ -43,7 +44,8 @@ const Chatbot: React.FC = () => {
           console.log(`Tool call result: ${toolCallResult}`);
           if (toolCallResult !== null) {
             if (toolCallResult !== "") {
-              setMessages(prevMessages => [...prevMessages, { text: toolCallResult, sender: 'bot' }])
+              setMessages(prevMessages => [...prevMessages, { text: toolCallResult, sender: 'bot' }]);
+              await axios.patch(`${apiHost}/tool-call/${promptId}`, { result: toolCallResult });
             } else {
               setMessages(prevMessages => [...prevMessages, { text: `Ok, executing tool: ${parsedResponse['name']}`, sender: 'bot' }]);
             }
