@@ -17,3 +17,8 @@ class PromptsStore:
             {"promptId": prompt_id, "prompt": prompt, "response": response}
         )
         return prompt_id
+
+    def update_tool_call_result(self, prompt_id: str, tool_call_result: str):
+        self.collection.update_one(
+            {"promptId": prompt_id}, {"$set": {"toolCallResult": tool_call_result}}
+        )

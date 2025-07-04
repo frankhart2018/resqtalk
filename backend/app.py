@@ -40,6 +40,10 @@ class PromptRequest(BaseModel):
     prompt: str
 
 
+class ToolCallResultRequest(BaseModel):
+    result: str
+
+
 @app.post("/prompt")
 async def generate_prompt(request: PromptRequest):
     response = llm_client.generate(request.prompt)
@@ -47,6 +51,12 @@ async def generate_prompt(request: PromptRequest):
         prompt=request.prompt, response=response
     )
     return {"response": response, "promptId": prompt_id}
+
+
+@app.patch("/tool-call/{promptId}")
+async def update_tool_call(promptId: str, request: ToolCallResultRequest):
+    prompts_store.update_tool_call_result(prompt_id=promptId, tool_call_result=request.result)
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":
