@@ -1,3 +1,4 @@
+import uuid
 from service.utils.singleton import singleton
 import pymongo
 from service.utils.environment import MONGO_HOST
@@ -10,5 +11,9 @@ class PromptsStore:
         self.db = self.client["resqtalk_db"]
         self.collection = self.db["prompts"]
 
-    def store_prompt_and_result(self, prompt: str, response: str):
-        self.collection.insert_one({"prompt": prompt, "response": response})
+    def store_prompt_and_result(self, prompt: str, response: str) -> str:
+        prompt_id = str(uuid.uuid4())
+        self.collection.insert_one(
+            {"promptId": prompt_id, "prompt": prompt, "response": response}
+        )
+        return prompt_id

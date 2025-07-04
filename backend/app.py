@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import uuid
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,7 +23,7 @@ async def lifespan(app: FastAPI):
     yield
     # Clean up the ML models and release the resources
     llm_client = None
-    mongo_client = None
+    prompts_store = None
 
 
 app = FastAPI(lifespan=lifespan)
@@ -42,8 +43,10 @@ class PromptRequest(BaseModel):
 @app.post("/prompt")
 async def generate_prompt(request: PromptRequest):
     response = llm_client.generate(request.prompt)
-    prompts_store.store_prompt_and_result(prompt=request.prompt, response=response)
-    return {"response": response}
+    prompt_id = prompts_store.store_prompt_and_result(
+        prompt=request.prompt, response=response
+    )
+    return {"response": response, "promptId": prompt_id}
 
 
 if __name__ == "__main__":
