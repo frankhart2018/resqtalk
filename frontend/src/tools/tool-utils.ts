@@ -57,9 +57,9 @@ export const registerTool = (
 
 export const getPromptWithTools = (): string => {
   const tools = JSON.stringify(
-    TOOLS.map((tool: Tool) => {
-      return { ...tool, result: null };
-    }),
+    // Remove result from tools for prompts
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    TOOLS.map(({ result, ...rest }: Tool) => rest),
     null,
     2
   );

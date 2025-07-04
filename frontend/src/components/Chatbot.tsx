@@ -1,64 +1,103 @@
-import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import './Chatbot.css';
-import ThemeToggle from './ThemeToggle';
-import { executeToolCall, getPromptWithTools } from '../tools/tool-utils';
-import { getLocation, LOCATION_RESULT } from '../tools/location-tools';
+import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import "./Chatbot.css";
+import ThemeToggle from "./ThemeToggle";
+import { executeToolCall, getPromptWithTools } from "../tools/tool-utils";
+
+const sendPrompt = async (apiHost: string, promptString: string) => {
+  const response = await axios.post(`${apiHost}/prompt`, {
+    prompt: promptString,
+  });
+  console.log(promptString);
+  console.log(response.data);
+  return response;
+};
+
+const processToolCallMessages = (response: string): [string | null, string] => {
+  const parsedResponse = JSON.parse(response);
+  console.log(`Found tool call: ${parsedResponse}`);
+
+  const toolCallResult = executeToolCall(
+    parsedResponse["name"],
+    parsedResponse["parameters"]
+  );
+  console.log(`Tool call result: ${toolCallResult}`);
+  return [toolCallResult, parsedResponse["name"]];
+};
 
 const Chatbot: React.FC = () => {
-  const [messages, setMessages] = useState<{ text: string; sender: 'user' | 'bot' }[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [messages, setMessages] = useState<
+    { text: string; sender: "user" | "bot" }[]
+  >([]);
+  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState("dark");
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  const appendMessage = (message: { text: string; sender: "bot" | "user" }) => {
+    setMessages((prevMessages) => [...prevMessages, message]);
+  };
+
+  const appendBotMessage = (text: string) => {
+    appendMessage({
+      text,
+      sender: "bot",
+    });
+  };
+
+  const appendUserMessage = (text: string) => {
+    appendMessage({
+      text,
+      sender: "user",
+    });
+  };
+
   const handleSendMessage = async () => {
     if (inputValue.trim()) {
-      setMessages([...messages, { text: inputValue, sender: 'user' }]);
-      setInputValue('');
+      appendUserMessage(inputValue);
+      setInputValue("");
       setIsLoading(true);
       try {
         const promptString = `${getPromptWithTools()}\n\n${inputValue}`;
-        const apiHost = import.meta.env.VITE_API_HOST || `http://${window.location.hostname}:8000`;
-        const response = await axios.post(`${apiHost}/prompt`, { prompt: promptString });
-        console.log(promptString);
-        console.log(response.data);
+        const apiHost =
+          import.meta.env.VITE_API_HOST ||
+          `http://${window.location.hostname}:8000`;
+        const response = await sendPrompt(apiHost, promptString);
         const promptId = response.data.promptId;
-        getLocation();
-        console.log(LOCATION_RESULT.result);
 
         try {
-          const parsedResponse = JSON.parse(response.data.response);
-          console.log(`Found tool call: ${parsedResponse}`);
-          const toolCallResult = executeToolCall(parsedResponse['name'], parsedResponse['parameters']);
-          console.log(`Tool call result: ${toolCallResult}`);
+          const [toolCallResult, toolName] = processToolCallMessages(
+            response.data.response
+          );
+
           if (toolCallResult !== null) {
             if (toolCallResult !== "") {
-              setMessages(prevMessages => [...prevMessages, { text: toolCallResult, sender: 'bot' }]);
-              await axios.patch(`${apiHost}/tool-call/${promptId}`, { result: toolCallResult });
+              appendBotMessage(toolCallResult);
+              await axios.patch(`${apiHost}/tool-call/${promptId}`, {
+                result: toolCallResult,
+              });
             } else {
-              setMessages(prevMessages => [...prevMessages, { text: `Ok, executing tool: ${parsedResponse['name']}`, sender: 'bot' }]);
+              appendBotMessage(`Ok, executing tool: ${toolName}`);
             }
           } else {
-            throw new Error("Failed tool call!")
+            throw new Error("Failed tool call!");
           }
         } catch {
-          setMessages(prevMessages => [...prevMessages, { text: response.data.response, sender: 'bot' }]);
+          appendBotMessage(response.data.response);
         }
-
       } catch (error) {
-        console.error('Error sending message:', error);
-        setMessages(prevMessages => [...prevMessages, { text: 'Error: Could not get a response from the bot.', sender: 'bot' }]);
+        console.error("Error sending message:", error);
+        appendBotMessage("Error: Could not get a response from the bot.");
       } finally {
         setIsLoading(false);
       }
@@ -66,7 +105,7 @@ const Chatbot: React.FC = () => {
   };
 
   const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
 
   return (
@@ -78,15 +117,17 @@ const Chatbot: React.FC = () => {
       <div className="chatbot-messages">
         {messages.map((message, index) => (
           <div key={index} className={`message-container ${message.sender}`}>
-            {message.sender === 'bot' && <div className="avatar bot">B</div>}
+            {message.sender === "bot" && <div className="avatar bot">B</div>}
             <div className={`chatbot-message ${message.sender}`}>
-              {message.sender === 'bot' ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+              {message.sender === "bot" ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message.text}
+                </ReactMarkdown>
               ) : (
                 message.text
               )}
             </div>
-            {message.sender === 'user' && <div className="avatar user">U</div>}
+            {message.sender === "user" && <div className="avatar user">U</div>}
           </div>
         ))}
         <div ref={messagesEndRef} />
@@ -101,7 +142,7 @@ const Chatbot: React.FC = () => {
       </div>
       <form
         className="chatbot-form"
-        onSubmit={e => {
+        onSubmit={(e) => {
           e.preventDefault();
           handleSendMessage();
         }}
@@ -110,12 +151,11 @@ const Chatbot: React.FC = () => {
           type="text"
           className="chatbot-input"
           value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
+          onChange={(e) => setInputValue(e.target.value)}
           placeholder="How can I help you in this disaster situation?"
           disabled={isLoading}
         />
-        <button type="submit" className="chatbot-button"
-          disabled={isLoading}>
+        <button type="submit" className="chatbot-button" disabled={isLoading}>
           Send
         </button>
       </form>
