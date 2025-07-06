@@ -96,7 +96,7 @@ Now extract information from this message. Return only valid JSON with no extra 
         except Exception as e:
             logging.error(f"Failed to store memory: {e}")
 
-    def store_memory(self, user_message: str):
+    async def store_memory(self, user_message: str):
         logger.info(f"Starting to add memory for user message: '{user_message}'")
         with RedisStore.from_conn_string(REDIS_HOST) as store:
             store.setup()
