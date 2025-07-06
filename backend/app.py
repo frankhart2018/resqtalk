@@ -6,8 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 
-from service.model.llm import GemmaLLMClient
 from service.model.memory_agent import MemoryAgent
+from service.model.comm_agent import CommunicationAgent
 from service.utils.prompts_store import PromptsStore
 
 
@@ -15,10 +15,10 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-llm_client: Optional[GemmaLLMClient] = None
 prompts_store: Optional[PromptsStore] = None
 memory_agent: Optional[MemoryAgent] = None
 memory_queue: Optional[asyncio.Queue] = None
+comm_agent: Optional[CommunicationAgent] = None
 
 
 async def memory_processor():
@@ -31,6 +31,7 @@ async def memory_processor():
             memory_queue.task_done()
         except asyncio.CancelledError:
             logging.error("Memory processor cancelled")
+            break
         except Exception as e:
             logging.error(f"Error in memory processor: {e}")
 
@@ -38,10 +39,10 @@ async def memory_processor():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-    global llm_client, prompts_store, memory_agent, memory_queue
-    llm_client = GemmaLLMClient()
+    global prompts_store, memory_agent, memory_queue, comm_agent
     prompts_store = PromptsStore()
     memory_agent = MemoryAgent()
+    comm_agent = CommunicationAgent()
     memory_queue = asyncio.Queue(maxsize=1000)
 
     memory_task = asyncio.create_task(memory_processor())
@@ -56,10 +57,10 @@ async def lifespan(app: FastAPI):
             pass
 
     # Clean up the ML models and release the resources
-    llm_client = None
     prompts_store = None
     memory_agent = None
     memory_queue = None
+    comm_agent = None
 
 
 app = FastAPI(lifespan=lifespan)
@@ -84,7 +85,7 @@ class ToolCallResultRequest(BaseModel):
 @app.post("/prompt")
 async def generate_prompt(request: PromptRequest):
     prompt_with_tools = f"{request.frontendTools}\n\n{request.prompt}"
-    response = llm_client.generate(prompt_with_tools)
+    response = comm_agent.generate(prompt_with_tools)
     prompt_id = prompts_store.store_prompt_and_result(
         prompt=prompt_with_tools, response=response
     )
