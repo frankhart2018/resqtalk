@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 import logging
-
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -12,25 +12,54 @@ from service.utils.prompts_store import PromptsStore
 
 
 logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 llm_client: Optional[GemmaLLMClient] = None
 prompts_store: Optional[PromptsStore] = None
 memory_agent: Optional[MemoryAgent] = None
+memory_queue: Optional[asyncio.Queue] = None
+
+
+async def memory_processor():
+    global memory_queue, memory_agent
+
+    while True:
+        try:
+            user_message = await memory_queue.get()
+            asyncio.create_task(memory_agent.store_memory(user_message))
+            memory_queue.task_done()
+        except asyncio.CancelledError:
+            logging.error("Memory processor cancelled")
+        except Exception as e:
+            logging.error(f"Error in memory processor: {e}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-    global llm_client, prompts_store, memory_agent
+    global llm_client, prompts_store, memory_agent, memory_queue
     llm_client = GemmaLLMClient()
     prompts_store = PromptsStore()
     memory_agent = MemoryAgent()
+    memory_queue = asyncio.Queue(maxsize=1000)
+
+    memory_task = asyncio.create_task(memory_processor())
+
     yield
+
+    if memory_task and not memory_task.done():
+        memory_task.cancel()
+        try:
+            await memory_task
+        except asyncio.CancelledError:
+            pass
+
     # Clean up the ML models and release the resources
     llm_client = None
     prompts_store = None
     memory_agent = None
+    memory_queue = None
 
 
 app = FastAPI(lifespan=lifespan)
@@ -59,7 +88,9 @@ async def generate_prompt(request: PromptRequest):
     prompt_id = prompts_store.store_prompt_and_result(
         prompt=prompt_with_tools, response=response
     )
-    memory_agent.store_memory(user_message=request.prompt)
+
+    # Fire and forget into memory queue and return HTTP result
+    memory_queue.put_nowait(request.prompt)
     return {"response": response, "promptId": prompt_id}
 
 
@@ -74,4 +105,4 @@ async def update_tool_call(promptId: str, request: ToolCallResultRequest):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, workers=1)
