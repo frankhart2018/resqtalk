@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-import uuid
+import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,23 +7,30 @@ from pydantic import BaseModel
 from typing import Optional
 
 from service.model.llm import GemmaLLMClient
+from service.model.memory_agent import MemoryAgent
 from service.utils.prompts_store import PromptsStore
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 llm_client: Optional[GemmaLLMClient] = None
 prompts_store: Optional[PromptsStore] = None
+memory_agent: Optional[MemoryAgent] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-    global llm_client, prompts_store
+    global llm_client, prompts_store, memory_agent
     llm_client = GemmaLLMClient()
     prompts_store = PromptsStore()
+    memory_agent = MemoryAgent()
     yield
     # Clean up the ML models and release the resources
     llm_client = None
     prompts_store = None
+    memory_agent = None
 
 
 app = FastAPI(lifespan=lifespan)
@@ -37,6 +44,7 @@ app.add_middleware(
 
 
 class PromptRequest(BaseModel):
+    frontendTools: str
     prompt: str
 
 
@@ -46,16 +54,20 @@ class ToolCallResultRequest(BaseModel):
 
 @app.post("/prompt")
 async def generate_prompt(request: PromptRequest):
-    response = llm_client.generate(request.prompt)
+    prompt_with_tools = f"{request.frontendTools}\n\n{request.prompt}"
+    response = llm_client.generate(prompt_with_tools)
     prompt_id = prompts_store.store_prompt_and_result(
-        prompt=request.prompt, response=response
+        prompt=prompt_with_tools, response=response
     )
+    memory_agent.store_memory(user_message=request.prompt)
     return {"response": response, "promptId": prompt_id}
 
 
 @app.patch("/tool-call/{promptId}")
 async def update_tool_call(promptId: str, request: ToolCallResultRequest):
-    prompts_store.update_tool_call_result(prompt_id=promptId, tool_call_result=request.result)
+    prompts_store.update_tool_call_result(
+        prompt_id=promptId, tool_call_result=request.result
+    )
     return {"status": "ok"}
 
 

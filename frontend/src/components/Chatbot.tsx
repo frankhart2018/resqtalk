@@ -9,6 +9,7 @@ import { executeToolCall, getPromptWithTools } from "../tools/tool-utils";
 const sendPrompt = async (apiHost: string, promptString: string) => {
   const response = await axios.post(`${apiHost}/prompt`, {
     prompt: promptString,
+    frontendTools: getPromptWithTools(),
   });
   console.log(promptString);
   console.log(response.data);
@@ -68,11 +69,10 @@ const Chatbot: React.FC = () => {
       setInputValue("");
       setIsLoading(true);
       try {
-        const promptString = `${getPromptWithTools()}\n\n${inputValue}`;
         const apiHost =
           import.meta.env.VITE_API_HOST ||
           `http://${window.location.hostname}:8000`;
-        const response = await sendPrompt(apiHost, promptString);
+        const response = await sendPrompt(apiHost, inputValue);
         const promptId = response.data.promptId;
 
         try {
