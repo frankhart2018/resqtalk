@@ -7,6 +7,62 @@ import ThemeToggle from "./ThemeToggle";
 import { executeToolCall, getPromptWithTools } from "../tools/tool-utils";
 
 const sendPrompt = async (apiHost: string, promptString: string) => {
+  try {
+    const response = await fetch(`${apiHost}/aprompt`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        "Cache-Control": "no-cache",
+      },
+      body: JSON.stringify({
+        prompt: promptString,
+        frontendTools: getPromptWithTools(),
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to connect");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    const readStream = async () => {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n");
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6);
+              if (data === "[DONE]") {
+                return;
+              }
+              try {
+                const parsed = JSON.parse(data);
+                console.log(parsed);
+                // setMessages((prev) => [...prev, parsed]);
+              } catch (e) {
+                console.error("Error parsing SSE data:", e);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error reading stream:", error);
+      }
+    };
+
+    readStream();
+  } catch (error) {
+    console.error("Error connecting to SSE:", error);
+  }
+
   const response = await axios.post(`${apiHost}/prompt`, {
     prompt: promptString,
     frontendTools: getPromptWithTools(),

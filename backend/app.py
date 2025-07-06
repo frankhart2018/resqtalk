@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+from fastapi.responses import StreamingResponse
 
 from service.model.memory_agent import MemoryAgent
 from service.model.comm_agent import CommunicationAgent
@@ -85,7 +86,11 @@ class ToolCallResultRequest(BaseModel):
 @app.post("/prompt")
 async def generate_prompt(request: PromptRequest):
     prompt_with_tools = f"{request.frontendTools}\n\n{request.prompt}"
-    response = comm_agent.generate(prompt_with_tools)
+    response = []
+    async for chunk in comm_agent.generate(prompt_with_tools):
+        print(chunk, end="")
+        response.append(chunk)
+    response = "".join(response)
     prompt_id = prompts_store.store_prompt_and_result(
         prompt=prompt_with_tools, response=response
     )
@@ -101,6 +106,27 @@ async def update_tool_call(promptId: str, request: ToolCallResultRequest):
         prompt_id=promptId, tool_call_result=request.result
     )
     return {"status": "ok"}
+
+
+@app.post("/aprompt")
+async def generate_aprompt(request: PromptRequest):
+    prompt_with_tools = f"{request.frontendTools}\n\n{request.prompt}"
+
+    async def generate_chunks():
+        full_response = []
+        async for chunk in comm_agent.generate(prompt_with_tools):
+            print(chunk, end="")
+            full_response.append(chunk)
+            yield chunk
+
+        # These operations happen after the entire message has been streamed
+        response_str = "".join(full_response)
+        prompt_id = prompts_store.store_prompt_and_result(
+            prompt=prompt_with_tools, response=response_str
+        )
+        memory_queue.put_nowait(request.prompt)
+
+    return StreamingResponse(generate_chunks(), media_type="text/plain")
 
 
 if __name__ == "__main__":
