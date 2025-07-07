@@ -3,6 +3,7 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain_core.runnables import RunnableConfig
 from langgraph.store.redis import RedisStore
 from langgraph.store.base import BaseStore
+import sys
 
 from service.utils.environment import OLLAMA_HOST, REDIS_HOST
 
@@ -11,7 +12,7 @@ class CommunicationAgent:
     def __init__(self):
         self.model = ChatOllama(model="gemma3n:latest", base_url=OLLAMA_HOST)
 
-    def __call_model(
+    async def __call_model(
         self, state: MessagesState, config: RunnableConfig, *, store: BaseStore
     ):
         user_id = config["configurable"]["user_id"]
@@ -22,12 +23,12 @@ class CommunicationAgent:
 
         system_msg = f"""You are a helpful assistant who is an expert in disaster management. 
             Here are some details about the user you are talking to: {info}"""
-        response = self.model.invoke(
-            [{"role": "system", "content": system_msg}] + state["messages"]
+        response = await self.model.ainvoke(
+            [{"role": "system", "content": system_msg}] + state["messages"], config
         )
         return {"messages": response}
 
-    def generate(self, prompt: str):
+    async def generate(self, prompt: str):
         with RedisStore.from_conn_string(REDIS_HOST) as store:
             store.setup()
 
@@ -40,8 +41,12 @@ class CommunicationAgent:
             graph = builder.compile(store=store)
 
             config = {"configurable": {"thread_id": "1", "user_id": "1"}}
-            response = graph.invoke(
-                {"messages": [{"role": "user", "content": prompt}]}, config
-            )
 
-            return response["messages"][-1].content
+            async for msg, _ in graph.astream(
+                {"messages": [{"role": "user", "content": prompt}]},
+                config,
+                stream_mode="messages",
+            ):
+                if msg.content:
+                    sys.stdout.flush()
+                    yield msg.content
