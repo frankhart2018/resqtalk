@@ -170,6 +170,10 @@ const Chatbot: React.FC = () => {
     }
   };
 
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [websocket, setWebsocket] = useState<WebSocket | null>(null);
+
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
@@ -221,6 +225,14 @@ const Chatbot: React.FC = () => {
           placeholder="How can I help you in this disaster situation?"
           disabled={isLoading}
         />
+        <button
+          type="button"
+          className={`chatbot-button ${isRecording ? "recording" : ""}`}
+          onClick={() => handleToggleRecording(isRecording, setIsRecording, mediaRecorder, setMediaRecorder, websocket, setWebsocket)}
+          disabled={isLoading}
+        >
+          {isRecording ? "Stop" : "Record"}
+        </button>
         <button type="submit" className="chatbot-button" disabled={isLoading}>
           Send
         </button>
@@ -230,3 +242,52 @@ const Chatbot: React.FC = () => {
 };
 
 export default Chatbot;
+
+const handleToggleRecording = async (
+  isRecording: boolean,
+  setIsRecording: Dispatch<SetStateAction<boolean>>,
+  mediaRecorder: MediaRecorder | null,
+  setMediaRecorder: Dispatch<SetStateAction<MediaRecorder | null>>,
+  websocket: WebSocket | null,
+  setWebsocket: Dispatch<SetStateAction<WebSocket | null>>
+) => {
+  if (isRecording) {
+    // Stop recording
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+    }
+    if (websocket) {
+      websocket.close();
+    }
+    setIsRecording(false);
+  } else {
+    // Start recording
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const newMediaRecorder = new MediaRecorder(stream);
+      const apiHost =
+        import.meta.env.VITE_API_HOST ||
+        `ws://${window.location.hostname}:8000`;
+      const newWebsocket = new WebSocket(`${apiHost}/voice-stream`);
+
+      newWebsocket.onopen = () => {
+        newMediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            newWebsocket.send(event.data);
+          }
+        };
+        newMediaRecorder.start(100); // Send data every 100ms
+        setIsRecording(true);
+      };
+
+      newWebsocket.onclose = () => {
+        console.log("WebSocket connection closed");
+      };
+
+      setMediaRecorder(newMediaRecorder);
+      setWebsocket(newWebsocket);
+    } catch (error) {
+      console.error("Error starting recording:", error);
+    }
+  }
+};

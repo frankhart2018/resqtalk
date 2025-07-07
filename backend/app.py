@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 import logging
 import asyncio
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
+from fastapi.websockets import WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -125,6 +126,21 @@ async def generate_aprompt(request: PromptRequest):
         memory_queue.put_nowait(request.prompt)
 
     return StreamingResponse(generate_chunks(), media_type="text/event-stream")
+
+
+@app.websocket("/voice-stream")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_bytes()
+            # For now, we'll just log that we received data.
+            # In the future, this is where you'd process the audio stream.
+            logger.info(f"Received audio chunk of size: {len(data)}")
+    except WebSocketDisconnect:
+        logger.info("Client disconnected from voice stream")
+    except Exception as e:
+        logger.error(f"Error in voice stream: {e}")
 
 
 if __name__ == "__main__":
