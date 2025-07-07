@@ -117,7 +117,7 @@ async def generate_aprompt(request: PromptRequest):
         async for chunk in comm_agent.generate(prompt_with_tools):
             print(chunk, end="")
             full_response.append(chunk)
-            yield chunk
+            yield f"data: {chunk}\n\n"
 
         # These operations happen after the entire message has been streamed
         response_str = "".join(full_response)
@@ -126,7 +126,7 @@ async def generate_aprompt(request: PromptRequest):
         )
         memory_queue.put_nowait(request.prompt)
 
-    return StreamingResponse(generate_chunks(), media_type="text/plain")
+    return StreamingResponse(generate_chunks(), media_type="text/event-stream")
 
 
 if __name__ == "__main__":

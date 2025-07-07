@@ -1,75 +1,85 @@
-import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
+import React, { useState, useRef, useEffect, type Dispatch, type SetStateAction } from "react";
+// import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./Chatbot.css";
 import ThemeToggle from "./ThemeToggle";
 import { executeToolCall, getPromptWithTools } from "../tools/tool-utils";
 
-const sendPrompt = async (apiHost: string, promptString: string) => {
+const streamPromptResponse = async (
+  apiHost: string,
+  prompt: string,
+  setMessages: Dispatch<SetStateAction<{ text: string; sender: "user" | "bot" }[]>>,
+  setIsLoading: Dispatch<SetStateAction<boolean>>,
+): Promise<string> => {
+  let replyData = "";
+
   try {
     const response = await fetch(`${apiHost}/aprompt`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-        "Cache-Control": "no-cache",
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream'
       },
       body: JSON.stringify({
-        prompt: promptString,
         frontendTools: getPromptWithTools(),
-      }),
+        prompt: prompt
+      })
     });
 
     if (!response.ok) {
-      throw new Error("Failed to connect");
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const reader = response.body.getReader();
+    const reader = response.body?.getReader();
     const decoder = new TextDecoder();
 
-    const readStream = async () => {
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+    if (!reader) {
+      throw new Error('No reader available');
+    }
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n");
+    let isFirstChunk = true;
+    while (true) {
+      const { done, value } = await reader.read();
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") {
-                return;
-              }
-              try {
-                const parsed = JSON.parse(data);
-                console.log(parsed);
-                // setMessages((prev) => [...prev, parsed]);
-              } catch (e) {
-                console.error("Error parsing SSE data:", e);
-              }
+      if (done) {
+        console.log('Stream ended');
+        break;
+      }
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      lines.forEach((line: string) => {
+        if (line.startsWith('data: ')) {
+          const data = line.substring(6);
+          if (data.trim()) {
+            console.log('Received chunk:', data);
+            replyData += data;
+
+            if (isFirstChunk) {
+              isFirstChunk = false;
+              setIsLoading(false);
+              setMessages((prevMessages) => [...prevMessages, {
+                sender: "bot",
+                text: replyData,
+              }]);
+            } else {
+              setMessages((prevMessages) => [...prevMessages.slice(0, prevMessages.length - 1), {
+                sender: "bot",
+                text: replyData,
+              }])
             }
           }
         }
-      } catch (error) {
-        console.error("Error reading stream:", error);
-      }
-    };
+      });
+    }
 
-    readStream();
-  } catch (error) {
-    console.error("Error connecting to SSE:", error);
+  } catch (error: unknown) {
+    console.error('Error:', error);
   }
 
-  const response = await axios.post(`${apiHost}/prompt`, {
-    prompt: promptString,
-    frontendTools: getPromptWithTools(),
-  });
-  console.log(promptString);
-  console.log(response.data);
-  return response;
+  return replyData;
 };
 
 const processToolCallMessages = (response: string): [string | null, string] => {
@@ -105,11 +115,11 @@ const Chatbot: React.FC = () => {
     setMessages((prevMessages) => [...prevMessages, message]);
   };
 
-  const appendBotMessage = (text: string) => {
-    appendMessage({
-      text,
+  const replaceLastBotMessage = (text: string) => {
+    setMessages((prevMessages) => [...prevMessages.slice(0, prevMessages.length - 1), {
       sender: "bot",
-    });
+      text
+    }]);
   };
 
   const appendUserMessage = (text: string) => {
@@ -128,32 +138,32 @@ const Chatbot: React.FC = () => {
         const apiHost =
           import.meta.env.VITE_API_HOST ||
           `http://${window.location.hostname}:8000`;
-        const response = await sendPrompt(apiHost, inputValue);
-        const promptId = response.data.promptId;
+        const replyData = await streamPromptResponse(apiHost, inputValue, setMessages, setIsLoading);
+        // const promptId = response.data.promptId;
 
         try {
           const [toolCallResult, toolName] = processToolCallMessages(
-            response.data.response
+            replyData
           );
 
           if (toolCallResult !== null) {
             if (toolCallResult !== "") {
-              appendBotMessage(toolCallResult);
-              await axios.patch(`${apiHost}/tool-call/${promptId}`, {
-                result: toolCallResult,
-              });
+              replaceLastBotMessage(toolCallResult);
+              // await axios.patch(`${apiHost}/tool-call/${promptId}`, {
+              //   result: toolCallResult,
+              // });
             } else {
-              appendBotMessage(`Ok, executing tool: ${toolName}`);
+              replaceLastBotMessage(`Ok, executing tool: ${toolName}`);
             }
           } else {
             throw new Error("Failed tool call!");
           }
-        } catch {
-          appendBotMessage(response.data.response);
+        } catch (error) {
+          console.log(error);
         }
       } catch (error) {
         console.error("Error sending message:", error);
-        appendBotMessage("Error: Could not get a response from the bot.");
+        replaceLastBotMessage("Error: Could not get a response from the bot.");
       } finally {
         setIsLoading(false);
       }
