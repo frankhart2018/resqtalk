@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse
 
 from service.model.memory_agent import MemoryAgent
 from service.model.comm_agent import CommunicationAgent
+from service.model.voice_agent import VoiceAgent
 from service.utils.prompts_store import PromptsStore
 
 
@@ -21,6 +22,7 @@ prompts_store: Optional[PromptsStore] = None
 memory_agent: Optional[MemoryAgent] = None
 memory_queue: Optional[asyncio.Queue] = None
 comm_agent: Optional[CommunicationAgent] = None
+voice_agent: Optional[VoiceAgent] = None
 
 
 async def memory_processor():
@@ -41,10 +43,11 @@ async def memory_processor():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-    global prompts_store, memory_agent, memory_queue, comm_agent
+    global prompts_store, memory_agent, memory_queue, comm_agent, voice_agent
     prompts_store = PromptsStore()
     memory_agent = MemoryAgent()
     comm_agent = CommunicationAgent()
+    voice_agent = VoiceAgent()
     memory_queue = asyncio.Queue(maxsize=1000)
 
     memory_task = asyncio.create_task(memory_processor())
@@ -63,6 +66,7 @@ async def lifespan(app: FastAPI):
     memory_agent = None
     memory_queue = None
     comm_agent = None
+    voice_agent = None
 
 
 app = FastAPI(lifespan=lifespan)
@@ -126,6 +130,11 @@ async def generate_aprompt(request: PromptRequest):
         memory_queue.put_nowait(request.prompt)
 
     return StreamingResponse(generate_chunks(), media_type="text/event-stream")
+
+
+@app.post("/vprompt")
+async def generate_vprompt():
+    return {"response": voice_agent.generate("")}
 
 
 @app.websocket("/voice-stream")
