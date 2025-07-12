@@ -8,9 +8,12 @@ from pydantic import BaseModel
 from typing import Optional
 from fastapi.responses import StreamingResponse
 
-from service.model.memory_agent import MemoryAgent
-from service.model.comm_agent import CommunicationAgent
-from service.model.voice_agent import VoiceAgent
+from service.model import (
+    CommunicationAgent,
+    MemoryAgent,
+    VoiceCommunicationAgent,
+    VoiceMemoryAgent,
+)
 from service.utils.prompts_store import PromptsStore
 
 
@@ -22,7 +25,8 @@ prompts_store: Optional[PromptsStore] = None
 memory_agent: Optional[MemoryAgent] = None
 memory_queue: Optional[asyncio.Queue] = None
 comm_agent: Optional[CommunicationAgent] = None
-voice_agent: Optional[VoiceAgent] = None
+voice_agent: Optional[VoiceCommunicationAgent] = None
+voice_memory_agent: Optional[VoiceMemoryAgent] = None
 
 
 async def memory_processor():
@@ -43,11 +47,12 @@ async def memory_processor():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-    global prompts_store, memory_agent, memory_queue, comm_agent, voice_agent
+    global prompts_store, memory_agent, memory_queue, comm_agent, voice_agent, voice_memory_agent
     prompts_store = PromptsStore()
     memory_agent = MemoryAgent()
     comm_agent = CommunicationAgent()
-    voice_agent = VoiceAgent()
+    voice_agent = VoiceCommunicationAgent()
+    voice_memory_agent = VoiceMemoryAgent()
     memory_queue = asyncio.Queue(maxsize=1000)
 
     memory_task = asyncio.create_task(memory_processor())
@@ -67,6 +72,7 @@ async def lifespan(app: FastAPI):
     memory_queue = None
     comm_agent = None
     voice_agent = None
+    voice_memory_agent = None
 
 
 app = FastAPI(lifespan=lifespan)
@@ -134,6 +140,7 @@ async def generate_aprompt(request: PromptRequest):
 
 @app.post("/vprompt")
 async def generate_vprompt():
+    # memory_queue.put_nowait("")
     return {"response": voice_agent.generate("")}
 
 

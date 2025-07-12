@@ -9,7 +9,7 @@ import sys
 from service.utils.environment import OLLAMA_HOST, REDIS_HOST
 
 
-class VoiceAgent:
+class VoiceCommunicationAgent:
     MODEL_ID = "google/gemma-3n-E4B-it"
 
     def __init__(self):
@@ -34,18 +34,18 @@ class VoiceAgent:
         #     Here are some details about the user you are talking to: {info}"""
 
         messages = [
-            # {
-            #     "role": "system",
-            #     "content": [{"type": "text", "text": system_msg}],
-            # },
             {
                 "role": "user",
                 "content": [
                     {
                         "type": "audio",
                         "audio": "https://ai.google.dev/gemma/docs/audio/roses-are.wav",
-                    }
+                    },
                 ],
+            },
+            {
+                "role": "system",
+                "content": [{"type": "text", "text": "Give an appropriate reply."}],
             },
         ]
 
