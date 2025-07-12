@@ -132,11 +132,22 @@ async def generate_aprompt(request: PromptRequest):
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
+        audio_buffer = bytearray()
         while True:
-            data = await websocket.receive_bytes()
-            # For now, we'll just log that we received data.
-            # In the future, this is where you'd process the audio stream.
-            logger.info(f"Received audio chunk of size: {len(data)}")
+            message = await websocket.receive()
+            if "bytes" in message:
+                audio_buffer.extend(message["bytes"])
+                logger.info(f"Received chunk of size: {len(message['bytes'])}")
+            elif "text" in message and message["text"] == "DONE":
+                # This assumes frontend sends a "DONE" message to indicate end
+                logger.info(f"Total audio received: {len(audio_buffer)} bytes")
+
+                # Optionally save to file
+                with open("received_audio.wav", "wb") as f:
+                    f.write(audio_buffer)
+
+                await websocket.send_text("Received audio successfully!")
+                break
     except WebSocketDisconnect:
         logger.info("Client disconnected from voice stream")
     except Exception as e:

@@ -303,3 +303,27 @@
   padding: 0;
   border-radius: 0;
 }
+.chatbot-button.recording {
+  background: #dc3545 !important; /* Red color while recording */
+  animation: pulse 2s infinite;
+}
+
+.chatbot.dark .chatbot-button.recording {
+  background: #dc3545 !important;
+}
+
+.chatbot.light .chatbot-button.recording {
+  background: #dc3545 !important;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
