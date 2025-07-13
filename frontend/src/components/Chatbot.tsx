@@ -121,7 +121,7 @@ const Chatbot: React.FC = () => {
         const audioBlob = await stopRecordingAudio();
         if (!audioBlob) throw new Error("Recording failed");
 
-        const apiHost = import.meta.env.VITE_API_HOST || `ws://${window.location.hostname}:8000`;
+        const apiHost = import.meta.env.VITE_API_BASE || `ws://${window.location.hostname}:8000`;
         const ws = new WebSocket(`${apiHost}/voice-stream`);
 
         const transcription = await new Promise<string>((resolve, reject) => {
@@ -182,13 +182,16 @@ const Chatbot: React.FC = () => {
     setMessages: Dispatch<SetStateAction<{ text: string; sender: "user" | "bot" }[]>>,
     setIsLoading: Dispatch<SetStateAction<boolean>>
   ): Promise<string> => {
+    console.log(apiHost);
     let replyData = "";
     try {
       const response = await fetch(`${apiHost}/aprompt`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "text/event-stream"
+          Accept: "text/event-stream",
+          "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
+          "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
         },
         body: JSON.stringify({
           frontendTools: getPromptWithTools(),
@@ -259,7 +262,7 @@ const Chatbot: React.FC = () => {
       setIsLoading(true);
       try {
         const apiHost =
-          import.meta.env.VITE_API_HOST ||
+          import.meta.env.VITE_API_BASE ||
           `http://${window.location.hostname}:8000`;
         const replyData = await streamPromptResponse(apiHost, inputValue, setMessages, setIsLoading);
         try {
@@ -345,7 +348,7 @@ const Chatbot: React.FC = () => {
           placeholder="How can I help you in this disaster situation?"
           disabled={isLoading}
         />
-           <button
+        <button
           type="button"
           className={`chatbot-button ${isRecording ? "recording" : ""}`}
           onClick={handleToggleRecording}
