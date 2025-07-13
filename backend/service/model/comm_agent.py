@@ -5,12 +5,14 @@ from langgraph.store.redis import RedisStore
 from langgraph.store.base import BaseStore
 import sys
 
-from service.utils.environment import OLLAMA_HOST, REDIS_HOST
+from service.utils.environment import REDIS_HOST
+from service.model.ollama_client import LangchainOllamaGemmaClient
 
 
 class CommunicationAgent:
     def __init__(self):
-        self.model = ChatOllama(model="gemma3n:latest", base_url=OLLAMA_HOST)
+        model_obj = LangchainOllamaGemmaClient()
+        self.model = model_obj.model
 
     async def __call_model(
         self, state: MessagesState, config: RunnableConfig, *, store: BaseStore

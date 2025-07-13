@@ -7,7 +7,8 @@ import json
 import uuid
 import logging
 
-from service.utils.environment import OLLAMA_HOST, REDIS_HOST
+from service.utils.environment import REDIS_HOST
+from service.model.ollama_client import LangchainOllamaGemmaClient
 
 
 logger = logging.getLogger(__name__)
@@ -15,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 class MemoryAgent:
     def __init__(self):
-        self.model = ChatOllama(model="gemma3n:latest", base_url=OLLAMA_HOST)
+        model_obj = LangchainOllamaGemmaClient()
+        self.model = model_obj.model
 
     def __store_memory(
         self, state: MessagesState, config: RunnableConfig, *, store: BaseStore
