@@ -9,6 +9,8 @@ from typing import Optional
 from fastapi.responses import StreamingResponse
 from enum import Enum
 import gc
+import uuid
+from pathlib import Path
 
 from service.model import (
     CommunicationAgent,
@@ -34,7 +36,7 @@ memory_queue: Optional[asyncio.Queue] = None
 comm_agent: Optional[CommunicationAgent] = None
 voice_agent: Optional[VoiceCommunicationAgent] = None
 voice_memory_agent: Optional[VoiceMemoryAgent] = None
-current_mode: Mode = Mode.TEXT
+current_mode: Mode = Mode.VOICE
 
 
 async def memory_processor():
@@ -58,14 +60,22 @@ async def memory_processor():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # TODO: Switch back to default as text mode once frontend starts requesting mode change for voice
+
     # Load the ML model
     global prompts_store, memory_agent, memory_queue, comm_agent, voice_agent, voice_memory_agent
     prompts_store = PromptsStore()
-    memory_agent = MemoryAgent()
-    comm_agent = CommunicationAgent()
+    # memory_agent = MemoryAgent()
+    # comm_agent = CommunicationAgent()
+    voice_agent = VoiceCommunicationAgent()
+    voice_memory_agent = VoiceMemoryAgent()
     memory_queue = asyncio.Queue(maxsize=1000)
 
     memory_task = asyncio.create_task(memory_processor())
+
+    logger.info(
+        f"API Server ready for requests, current processing mode: '{current_mode.name}'"
+    )
 
     yield
 
@@ -156,20 +166,6 @@ async def generate_aprompt(request: PromptRequest):
     return StreamingResponse(generate_chunks(), media_type="text/event-stream")
 
 
-@app.post("/vprompt")
-async def generate_vprompt():
-    global current_mode
-
-    if current_mode != Mode.VOICE:
-        raise HTTPException(
-            status_code=500,
-            detail="Switch to voice mode first using '/switch?mode='voice''",
-        )
-
-    memory_queue.put_nowait("")
-    return {"response": voice_agent.generate("")}
-
-
 @app.post("/switch")
 async def switch_mode(mode: Mode):
     global current_mode
@@ -210,6 +206,10 @@ async def switch_mode(mode: Mode):
 
 @app.websocket("/voice-stream")
 async def websocket_endpoint(websocket: WebSocket):
+    # TODO: Validate if the current mode is "VOICE"
+
+    filename = Path(f"{uuid.uuid4()}.wav")
+
     await websocket.accept()
     try:
         audio_buffer = bytearray()
@@ -219,19 +219,27 @@ async def websocket_endpoint(websocket: WebSocket):
                 audio_buffer.extend(message["bytes"])
                 logger.info(f"Received chunk of size: {len(message['bytes'])}")
             elif "text" in message and message["text"] == "DONE":
-                # This assumes frontend sends a "DONE" message to indicate end
+                # This assumes client sends a "DONE" message to indicate end
                 logger.info(f"Total audio received: {len(audio_buffer)} bytes")
 
-                # Optionally save to file
-                with open("received_audio.wav", "wb") as f:
+                with open(filename, "wb") as f:
                     f.write(audio_buffer)
+
+                output = voice_agent.generate(str(filename))
+                logger.info(f"Output from model: {output}")
+
+                memory_queue.put_nowait(str(filename))
+                await websocket.send_text(output)
+
+                # Wait till the file is read by memory agent
+                await asyncio.sleep(2)
 
                 await websocket.send_text("Received audio successfully!")
                 break
     except WebSocketDisconnect:
         logger.info("Client disconnected from voice stream")
-    except Exception as e:
-        logger.error(f"Error in voice stream: {e}")
+    finally:
+        filename.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

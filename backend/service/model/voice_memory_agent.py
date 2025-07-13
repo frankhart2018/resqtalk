@@ -8,7 +8,8 @@ import json
 import uuid
 import logging
 
-from service.utils.environment import OLLAMA_HOST, REDIS_HOST
+from service.utils.environment import REDIS_HOST
+from service.utils.wav_utils import load_audio_from_file
 
 
 logger = logging.getLogger(__name__)
@@ -61,7 +62,9 @@ Now extract information from this message. Return only valid JSON with no extra 
                 "content": [
                     {
                         "type": "audio",
-                        "audio": "https://ai.google.dev/gemma/docs/audio/roses-are.wav",
+                        "audio": load_audio_from_file(
+                            file_path=state["messages"][-1].content
+                        ),
                     },
                 ],
             },

@@ -4,7 +4,7 @@ import React, {
   useRef,
   useEffect,
   type Dispatch,
-  type SetStateAction
+  type SetStateAction,
 } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -15,7 +15,7 @@ import {
   MediaRecorder as ExtendableMediaRecorder,
   type IMediaRecorder,
   type IBlobEvent,
-  register
+  register,
 } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
 
@@ -23,6 +23,8 @@ let audioBlobs: Blob[] = [];
 let capturedStream: MediaStream | null = null;
 let mediaRecorder: IMediaRecorder | null = null;
 let encoderRegistered = false;
+const API_HOST =
+  import.meta.env.VITE_API_BASE || `ws://${window.location.hostname}:8000`;
 
 const registerWavEncoder = async () => {
   if (!encoderRegistered) {
@@ -32,9 +34,10 @@ const registerWavEncoder = async () => {
   }
 };
 
-
 const Chatbot: React.FC = () => {
-  const [messages, setMessages] = useState<{ text: string; sender: "user" | "bot" }[]>([]);
+  const [messages, setMessages] = useState<
+    { text: string; sender: "user" | "bot" }[]
+  >([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [theme, setTheme] = useState("dark");
@@ -42,7 +45,9 @@ const Chatbot: React.FC = () => {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {
-    registerWavEncoder().catch(err => console.error("Encoder registration failed:", err));
+    registerWavEncoder().catch((err) =>
+      console.error("Encoder registration failed:", err)
+    );
   }, []);
 
   const scrollToBottom = () => {
@@ -58,7 +63,7 @@ const Chatbot: React.FC = () => {
   const replaceLastBotMessage = (text: string) => {
     setMessages((prevMessages) => [
       ...prevMessages.slice(0, prevMessages.length - 1),
-      { sender: "bot", text }
+      { sender: "bot", text },
     ]);
   };
 
@@ -80,12 +85,15 @@ const Chatbot: React.FC = () => {
       audioBlobs = [];
 
       mediaRecorder = new ExtendableMediaRecorder(stream, {
-        mimeType: "audio/wav"
+        mimeType: "audio/wav",
       });
 
-      mediaRecorder.addEventListener("dataavailable", function (this: IMediaRecorder, event: IBlobEvent) {
-        audioBlobs.push(event.data);
-      });
+      mediaRecorder.addEventListener(
+        "dataavailable",
+        function (this: IMediaRecorder, event: IBlobEvent) {
+          audioBlobs.push(event.data);
+        }
+      );
 
       mediaRecorder.start();
       console.log("🎙️ Recording started with type:", mediaRecorder.mimeType);
@@ -96,14 +104,14 @@ const Chatbot: React.FC = () => {
   };
 
   const stopRecordingAudio = (): Promise<Blob | null> =>
-    new Promise(resolve => {
+    new Promise((resolve) => {
       if (!mediaRecorder) return resolve(null);
 
       mediaRecorder.addEventListener("stop", () => {
         const audioBlob = new Blob(audioBlobs, { type: "audio/wav" });
         console.log("🎙️ Recording stopped. Blob size:", audioBlob.size);
         if (capturedStream) {
-          capturedStream.getTracks().forEach(track => track.stop());
+          capturedStream.getTracks().forEach((track) => track.stop());
         }
         resolve(audioBlob);
       });
@@ -121,46 +129,30 @@ const Chatbot: React.FC = () => {
         const audioBlob = await stopRecordingAudio();
         if (!audioBlob) throw new Error("Recording failed");
 
-        const apiHost = import.meta.env.VITE_API_BASE || `ws://${window.location.hostname}:8000`;
-        const ws = new WebSocket(`${apiHost}/voice-stream`);
+        const ws = new WebSocket(`${API_HOST}/voice-stream`);
 
         const transcription = await new Promise<string>((resolve, reject) => {
           ws.onopen = () => {
             console.log("📡 WebSocket open. Sending audio...");
-            audioBlob.arrayBuffer().then(buffer => {
+            audioBlob.arrayBuffer().then((buffer) => {
               ws.send(buffer);
               ws.send("DONE");
             });
           };
 
-          ws.onmessage = event => {
+          ws.onmessage = (event) => {
             console.log("📨 Transcription received:", event.data);
             resolve(event.data);
             ws.close();
           };
 
-          ws.onerror = err => reject(err);
+          ws.onerror = (err) => reject(err);
           ws.onclose = () => console.log("🔌 WebSocket closed");
         });
 
         if (transcription.trim()) {
-          appendUserMessage(transcription);
+          appendMessage({ text: transcription, sender: "bot" });
           setInputValue(transcription);
-
-          const httpHost = import.meta.env.VITE_API_HOST || `http://${window.location.hostname}:8000`;
-          const replyData = await streamPromptResponse(httpHost, transcription, setMessages, setIsLoading);
-          try {
-            const [toolCallResult, toolName] = processToolCallMessages(replyData);
-            if (toolCallResult !== null) {
-              if (toolCallResult !== "") {
-                replaceLastBotMessage(toolCallResult);
-              } else {
-                replaceLastBotMessage(`Ok, executing tool: ${toolName}`);
-              }
-            }
-          } catch (error) {
-            console.log("Error processing tool call:", error);
-          }
         }
       } catch (error) {
         console.error("Error processing audio:", error);
@@ -175,28 +167,28 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  // (streamPromptResponse and processToolCallMessages remain unchanged)
   const streamPromptResponse = async (
-    apiHost: string,
     prompt: string,
-    setMessages: Dispatch<SetStateAction<{ text: string; sender: "user" | "bot" }[]>>,
+    setMessages: Dispatch<
+      SetStateAction<{ text: string; sender: "user" | "bot" }[]>
+    >,
     setIsLoading: Dispatch<SetStateAction<boolean>>
   ): Promise<string> => {
-    console.log(apiHost);
     let replyData = "";
     try {
-      const response = await fetch(`${apiHost}/aprompt`, {
+      const response = await fetch(`${API_HOST}/aprompt`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "text/event-stream",
           "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-          "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
+          "CF-Access-Client-Secret":
+            import.meta.env.VITE_CF_CLIENT_SECRET || "",
         },
         body: JSON.stringify({
           frontendTools: getPromptWithTools(),
-          prompt: prompt
-        })
+          prompt: prompt,
+        }),
       });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -226,12 +218,12 @@ const Chatbot: React.FC = () => {
                 setIsLoading(false);
                 setMessages((prevMessages) => [
                   ...prevMessages,
-                  { sender: "bot", text: replyData }
+                  { sender: "bot", text: replyData },
                 ]);
               } else {
                 setMessages((prevMessages) => [
                   ...prevMessages.slice(0, prevMessages.length - 1),
-                  { sender: "bot", text: replyData }
+                  { sender: "bot", text: replyData },
                 ]);
               }
             }
@@ -244,7 +236,9 @@ const Chatbot: React.FC = () => {
     return replyData;
   };
 
-  const processToolCallMessages = (response: string): [string | null, string] => {
+  const processToolCallMessages = (
+    response: string
+  ): [string | null, string] => {
     const parsedResponse = JSON.parse(response);
     console.log(`Found tool call: ${parsedResponse}`);
     const toolCallResult = executeToolCall(
@@ -261,10 +255,11 @@ const Chatbot: React.FC = () => {
       setInputValue("");
       setIsLoading(true);
       try {
-        const apiHost =
-          import.meta.env.VITE_API_BASE ||
-          `http://${window.location.hostname}:8000`;
-        const replyData = await streamPromptResponse(apiHost, inputValue, setMessages, setIsLoading);
+        const replyData = await streamPromptResponse(
+          inputValue,
+          setMessages,
+          setIsLoading
+        );
         try {
           const [toolCallResult, toolName] = processToolCallMessages(replyData);
           if (toolCallResult !== null) {
@@ -287,7 +282,6 @@ const Chatbot: React.FC = () => {
       }
     }
   };
-
 
   useEffect(() => {
     console.log("Recording state updated:", isRecording);

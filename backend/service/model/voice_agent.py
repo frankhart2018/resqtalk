@@ -4,9 +4,9 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain_core.runnables import RunnableConfig
 from langgraph.store.redis import RedisStore
 from langgraph.store.base import BaseStore
-import sys
 
-from service.utils.environment import OLLAMA_HOST, REDIS_HOST
+from service.utils.environment import REDIS_HOST
+from service.utils.wav_utils import load_audio_from_file
 
 
 class VoiceCommunicationAgent:
@@ -24,14 +24,15 @@ class VoiceCommunicationAgent:
     def __call_model(
         self, state: MessagesState, config: RunnableConfig, *, store: BaseStore
     ):
-        # user_id = config["configurable"]["user_id"]
-        # namespace = ("memories", user_id)
-        # memories = store.search(namespace, query=str(state["messages"][-1].content))
+        user_id = config["configurable"]["user_id"]
+        namespace = ("memories", user_id)
+        memories = store.search(namespace, query=str(state["messages"][-1].content))
 
-        # info = "\n".join([str(d.value) for d in memories])
+        info = "\n".join([str(d.value) for d in memories])
 
-        # system_msg = f"""You are a helpful assistant who is an expert in disaster management.
-        #     Here are some details about the user you are talking to: {info}"""
+        system_msg = f"""You are a helpful assistant who is an expert in disaster management.
+            Here are some details about the user you are talking to: {info}.
+            Please give the user an appropriate reply"""
 
         messages = [
             {
@@ -39,13 +40,15 @@ class VoiceCommunicationAgent:
                 "content": [
                     {
                         "type": "audio",
-                        "audio": "https://ai.google.dev/gemma/docs/audio/roses-are.wav",
+                        "audio": load_audio_from_file(
+                            file_path=state["messages"][-1].content
+                        ),
                     },
                 ],
             },
             {
                 "role": "system",
-                "content": [{"type": "text", "text": "Give an appropriate reply."}],
+                "content": [{"type": "text", "text": system_msg}],
             },
         ]
 
