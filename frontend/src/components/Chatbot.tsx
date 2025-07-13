@@ -1,125 +1,65 @@
-import React, { useState, useRef, useEffect, type Dispatch, type SetStateAction } from "react";
-// import axios from "axios";
+// Chatbot.tsx
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  type Dispatch,
+  type SetStateAction
+} from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./Chatbot.css";
 import ThemeToggle from "./ThemeToggle";
 import { executeToolCall, getPromptWithTools } from "../tools/tool-utils";
+import {
+  MediaRecorder as ExtendableMediaRecorder,
+  type IMediaRecorder,
+  type IBlobEvent,
+  register
+} from "extendable-media-recorder";
+import { connect } from "extendable-media-recorder-wav-encoder";
 
-const streamPromptResponse = async (
-  apiHost: string,
-  prompt: string,
-  setMessages: Dispatch<SetStateAction<{ text: string; sender: "user" | "bot" }[]>>,
-  setIsLoading: Dispatch<SetStateAction<boolean>>,
-): Promise<string> => {
-  let replyData = "";
+let audioBlobs: Blob[] = [];
+let capturedStream: MediaStream | null = null;
+let mediaRecorder: IMediaRecorder | null = null;
+let encoderRegistered = false;
 
-  try {
-    const response = await fetch(`${apiHost}/aprompt`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'text/event-stream'
-      },
-      body: JSON.stringify({
-        frontendTools: getPromptWithTools(),
-        prompt: prompt
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
-
-    if (!reader) {
-      throw new Error('No reader available');
-    }
-
-    let isFirstChunk = true;
-    while (true) {
-      const { done, value } = await reader.read();
-
-      if (done) {
-        console.log('Stream ended');
-        break;
-      }
-
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
-
-      lines.forEach((line: string) => {
-        if (line.startsWith('data: ')) {
-          const data = line.substring(6);
-          if (data.trim()) {
-            console.log('Received chunk:', data);
-            replyData += data;
-
-            if (isFirstChunk) {
-              isFirstChunk = false;
-              setIsLoading(false);
-              setMessages((prevMessages) => [...prevMessages, {
-                sender: "bot",
-                text: replyData,
-              }]);
-            } else {
-              setMessages((prevMessages) => [...prevMessages.slice(0, prevMessages.length - 1), {
-                sender: "bot",
-                text: replyData,
-              }])
-            }
-          }
-        }
-      });
-    }
-
-  } catch (error: unknown) {
-    console.error('Error:', error);
+const registerWavEncoder = async () => {
+  if (!encoderRegistered) {
+    await register(await connect());
+    encoderRegistered = true;
+    console.log("WAV encoder registered.");
   }
-
-  return replyData;
 };
 
-const processToolCallMessages = (response: string): [string | null, string] => {
-  const parsedResponse = JSON.parse(response);
-  console.log(`Found tool call: ${parsedResponse}`);
-
-  const toolCallResult = executeToolCall(
-    parsedResponse["name"],
-    parsedResponse["parameters"]
-  );
-  console.log(`Tool call result: ${toolCallResult}`);
-  return [toolCallResult, parsedResponse["name"]];
-};
 
 const Chatbot: React.FC = () => {
-  const [messages, setMessages] = useState<
-    { text: string; sender: "user" | "bot" }[]
-  >([]);
+  const [messages, setMessages] = useState<{ text: string; sender: "user" | "bot" }[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [theme, setTheme] = useState("dark");
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
+
+  useEffect(() => {
+    registerWavEncoder().catch(err => console.error("Encoder registration failed:", err));
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  useEffect(scrollToBottom, [messages]);
 
   const appendMessage = (message: { text: string; sender: "bot" | "user" }) => {
     setMessages((prevMessages) => [...prevMessages, message]);
   };
 
   const replaceLastBotMessage = (text: string) => {
-    setMessages((prevMessages) => [...prevMessages.slice(0, prevMessages.length - 1), {
-      sender: "bot",
-      text
-    }]);
+    setMessages((prevMessages) => [
+      ...prevMessages.slice(0, prevMessages.length - 1),
+      { sender: "bot", text }
+    ]);
   };
 
   const appendUserMessage = (text: string) => {
@@ -127,6 +67,189 @@ const Chatbot: React.FC = () => {
       text,
       sender: "user",
     });
+  };
+
+  const startRecordingAudio = async () => {
+    try {
+      if (!ExtendableMediaRecorder.isTypeSupported("audio/wav")) {
+        throw new Error("audio/wav not supported by this browser.");
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      capturedStream = stream;
+      audioBlobs = [];
+
+      mediaRecorder = new ExtendableMediaRecorder(stream, {
+        mimeType: "audio/wav"
+      });
+
+      mediaRecorder.addEventListener("dataavailable", function (this: IMediaRecorder, event: IBlobEvent) {
+        audioBlobs.push(event.data);
+      });
+
+      mediaRecorder.start();
+      console.log("🎙️ Recording started with type:", mediaRecorder.mimeType);
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      alert("Microphone permission denied or WAV not supported.");
+    }
+  };
+
+  const stopRecordingAudio = (): Promise<Blob | null> =>
+    new Promise(resolve => {
+      if (!mediaRecorder) return resolve(null);
+
+      mediaRecorder.addEventListener("stop", () => {
+        const audioBlob = new Blob(audioBlobs, { type: "audio/wav" });
+        console.log("🎙️ Recording stopped. Blob size:", audioBlob.size);
+        if (capturedStream) {
+          capturedStream.getTracks().forEach(track => track.stop());
+        }
+        resolve(audioBlob);
+      });
+
+      mediaRecorder.stop();
+    });
+
+  const handleToggleRecording = async () => {
+    console.log("Toggle recording. Current state:", isRecording);
+    if (isRecording) {
+      setIsRecording(false);
+      setIsLoading(true);
+
+      try {
+        const audioBlob = await stopRecordingAudio();
+        if (!audioBlob) throw new Error("Recording failed");
+
+        const apiHost = import.meta.env.VITE_API_HOST || `ws://${window.location.hostname}:8000`;
+        const ws = new WebSocket(`${apiHost}/voice-stream`);
+
+        const transcription = await new Promise<string>((resolve, reject) => {
+          ws.onopen = () => {
+            console.log("📡 WebSocket open. Sending audio...");
+            audioBlob.arrayBuffer().then(buffer => {
+              ws.send(buffer);
+              ws.send("DONE");
+            });
+          };
+
+          ws.onmessage = event => {
+            console.log("📨 Transcription received:", event.data);
+            resolve(event.data);
+            ws.close();
+          };
+
+          ws.onerror = err => reject(err);
+          ws.onclose = () => console.log("🔌 WebSocket closed");
+        });
+
+        if (transcription.trim()) {
+          appendUserMessage(transcription);
+          setInputValue(transcription);
+
+          const httpHost = import.meta.env.VITE_API_HOST || `http://${window.location.hostname}:8000`;
+          const replyData = await streamPromptResponse(httpHost, transcription, setMessages, setIsLoading);
+          try {
+            const [toolCallResult, toolName] = processToolCallMessages(replyData);
+            if (toolCallResult !== null) {
+              if (toolCallResult !== "") {
+                replaceLastBotMessage(toolCallResult);
+              } else {
+                replaceLastBotMessage(`Ok, executing tool: ${toolName}`);
+              }
+            }
+          } catch (error) {
+            console.log("Error processing tool call:", error);
+          }
+        }
+      } catch (error) {
+        console.error("Error processing audio:", error);
+        replaceLastBotMessage("Error: Could not process audio recording.");
+      } finally {
+        setIsLoading(false);
+        setInputValue("");
+      }
+    } else {
+      setIsRecording(true);
+      await startRecordingAudio();
+    }
+  };
+
+  // (streamPromptResponse and processToolCallMessages remain unchanged)
+  const streamPromptResponse = async (
+    apiHost: string,
+    prompt: string,
+    setMessages: Dispatch<SetStateAction<{ text: string; sender: "user" | "bot" }[]>>,
+    setIsLoading: Dispatch<SetStateAction<boolean>>
+  ): Promise<string> => {
+    let replyData = "";
+    try {
+      const response = await fetch(`${apiHost}/aprompt`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream"
+        },
+        body: JSON.stringify({
+          frontendTools: getPromptWithTools(),
+          prompt: prompt
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      if (!reader) {
+        throw new Error("No reader available");
+      }
+      let isFirstChunk = true;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          console.log("Stream ended");
+          break;
+        }
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+        lines.forEach((line: string) => {
+          if (line.startsWith("data: ")) {
+            const data = line.substring(6);
+            if (data.trim()) {
+              console.log("Received chunk:", data);
+              replyData += data;
+              if (isFirstChunk) {
+                isFirstChunk = false;
+                setIsLoading(false);
+                setMessages((prevMessages) => [
+                  ...prevMessages,
+                  { sender: "bot", text: replyData }
+                ]);
+              } else {
+                setMessages((prevMessages) => [
+                  ...prevMessages.slice(0, prevMessages.length - 1),
+                  { sender: "bot", text: replyData }
+                ]);
+              }
+            }
+          }
+        });
+      }
+    } catch (error: unknown) {
+      console.error("Error:", error);
+    }
+    return replyData;
+  };
+
+  const processToolCallMessages = (response: string): [string | null, string] => {
+    const parsedResponse = JSON.parse(response);
+    console.log(`Found tool call: ${parsedResponse}`);
+    const toolCallResult = executeToolCall(
+      parsedResponse["name"],
+      parsedResponse["parameters"]
+    );
+    console.log(`Tool call result: ${toolCallResult}`);
+    return [toolCallResult, parsedResponse["name"]];
   };
 
   const handleSendMessage = async () => {
@@ -139,19 +262,11 @@ const Chatbot: React.FC = () => {
           import.meta.env.VITE_API_HOST ||
           `http://${window.location.hostname}:8000`;
         const replyData = await streamPromptResponse(apiHost, inputValue, setMessages, setIsLoading);
-        // const promptId = response.data.promptId;
-
         try {
-          const [toolCallResult, toolName] = processToolCallMessages(
-            replyData
-          );
-
+          const [toolCallResult, toolName] = processToolCallMessages(replyData);
           if (toolCallResult !== null) {
             if (toolCallResult !== "") {
               replaceLastBotMessage(toolCallResult);
-              // await axios.patch(`${apiHost}/tool-call/${promptId}`, {
-              //   result: toolCallResult,
-              // });
             } else {
               replaceLastBotMessage(`Ok, executing tool: ${toolName}`);
             }
@@ -170,9 +285,14 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  const [isRecording, setIsRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [websocket, setWebsocket] = useState<WebSocket | null>(null);
+
+  useEffect(() => {
+    console.log("Recording state updated:", isRecording);
+  }, [isRecording]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
@@ -225,11 +345,11 @@ const Chatbot: React.FC = () => {
           placeholder="How can I help you in this disaster situation?"
           disabled={isLoading}
         />
-        <button
+           <button
           type="button"
           className={`chatbot-button ${isRecording ? "recording" : ""}`}
-          onClick={() => handleToggleRecording(isRecording, setIsRecording, mediaRecorder, setMediaRecorder, websocket, setWebsocket)}
-          disabled={isLoading}
+          onClick={handleToggleRecording}
+          disabled={isLoading && !isRecording}
         >
           {isRecording ? "Stop" : "Record"}
         </button>
@@ -242,52 +362,3 @@ const Chatbot: React.FC = () => {
 };
 
 export default Chatbot;
-
-const handleToggleRecording = async (
-  isRecording: boolean,
-  setIsRecording: Dispatch<SetStateAction<boolean>>,
-  mediaRecorder: MediaRecorder | null,
-  setMediaRecorder: Dispatch<SetStateAction<MediaRecorder | null>>,
-  websocket: WebSocket | null,
-  setWebsocket: Dispatch<SetStateAction<WebSocket | null>>
-) => {
-  if (isRecording) {
-    // Stop recording
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-    }
-    if (websocket) {
-      websocket.close();
-    }
-    setIsRecording(false);
-  } else {
-    // Start recording
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const newMediaRecorder = new MediaRecorder(stream);
-      const apiHost =
-        import.meta.env.VITE_API_HOST ||
-        `ws://${window.location.hostname}:8000`;
-      const newWebsocket = new WebSocket(`${apiHost}/voice-stream`);
-
-      newWebsocket.onopen = () => {
-        newMediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            newWebsocket.send(event.data);
-          }
-        };
-        newMediaRecorder.start(100); // Send data every 100ms
-        setIsRecording(true);
-      };
-
-      newWebsocket.onclose = () => {
-        console.log("WebSocket connection closed");
-      };
-
-      setMediaRecorder(newMediaRecorder);
-      setWebsocket(newWebsocket);
-    } catch (error) {
-      console.error("Error starting recording:", error);
-    }
-  }
-};
