@@ -1,4 +1,3 @@
-from transformers import AutoProcessor, Gemma3nForConditionalGeneration
 import torch
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain_core.runnables import RunnableConfig
@@ -7,19 +6,13 @@ from langgraph.store.base import BaseStore
 
 from service.utils.environment import REDIS_HOST
 from service.utils.wav_utils import load_audio_from_file
+from service.model.hf_client import HuggingFaceGemma3nClient
 
 
 class VoiceCommunicationAgent:
-    MODEL_ID = "google/gemma-3n-E4B-it"
-
     def __init__(self):
-        self.model = Gemma3nForConditionalGeneration.from_pretrained(
-            self.MODEL_ID,
-            device_map="auto",
-            torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
-        )
-        self.processor = AutoProcessor.from_pretrained(self.MODEL_ID)
+        model_obj = HuggingFaceGemma3nClient()
+        self.model, self.processor = model_obj.model, model_obj.processor
 
     def __call_model(
         self, state: MessagesState, config: RunnableConfig, *, store: BaseStore
