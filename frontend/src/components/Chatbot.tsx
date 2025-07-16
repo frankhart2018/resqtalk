@@ -10,6 +10,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./Chatbot.css";
 import ThemeToggle from "./ThemeToggle";
+import ModeToggle from "./ModeToggle";
 import { executeToolCall, getPromptWithTools } from "../tools/tool-utils";
 import {
   MediaRecorder as ExtendableMediaRecorder,
@@ -42,12 +43,31 @@ const Chatbot: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [theme, setTheme] = useState("dark");
   const [isRecording, setIsRecording] = useState(false);
+  const [mode, setMode] = useState("text");
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {
     registerWavEncoder().catch((err) =>
       console.error("Encoder registration failed:", err)
     );
+
+    fetch(`${API_HOST}/mode`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
+        "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+      })
+      .then((data) => {
+        setMode(data.mode);
+      });
   }, []);
 
   const scrollToBottom = () => {
@@ -295,10 +315,29 @@ const Chatbot: React.FC = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
 
+  const toggleMode = async () => {
+    const newMode = mode === "text" ? "voice" : "text";
+    setMode((prevMode) => (prevMode === "text" ? "voice" : "text"));
+
+    const response = await fetch(`${API_HOST}/switch?mode=${newMode}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
+        "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  };
+
   return (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
         <div className="chatbot-header-title">ResQTalk</div>
+        <ModeToggle mode={mode} toggleMode={toggleMode} />
         <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       </div>
       <div className="chatbot-messages">
@@ -342,17 +381,21 @@ const Chatbot: React.FC = () => {
           placeholder="How can I help you in this disaster situation?"
           disabled={isLoading}
         />
-        <button
-          type="button"
-          className={`chatbot-button ${isRecording ? "recording" : ""}`}
-          onClick={handleToggleRecording}
-          disabled={isLoading && !isRecording}
-        >
-          {isRecording ? "Stop" : "Record"}
-        </button>
-        <button type="submit" className="chatbot-button" disabled={isLoading}>
-          Send
-        </button>
+        {mode === "voice" && (
+          <button
+            type="button"
+            className={`chatbot-button ${isRecording ? "recording" : ""}`}
+            onClick={handleToggleRecording}
+            disabled={isLoading && !isRecording}
+          >
+            {isRecording ? "Stop" : "Record"}
+          </button>
+        )}
+        {mode === "text" && (
+          <button type="submit" className="chatbot-button" disabled={isLoading}>
+            Send
+          </button>
+        )}
       </form>
     </div>
   );

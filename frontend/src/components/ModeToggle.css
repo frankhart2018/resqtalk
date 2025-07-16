@@ -1,0 +1,9 @@
+.mode-toggle {
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding: 0px 20px;
+}
+
+.mode-toggle:hover {
+  transform: scale(1.1);
+}
