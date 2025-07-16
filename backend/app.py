@@ -242,6 +242,11 @@ async def websocket_endpoint(websocket: WebSocket):
         filename.unlink(missing_ok=True)
 
 
+@app.get("/mode")
+def get_mode():
+    return {"mode": current_mode.value}
+
+
 if __name__ == "__main__":
     import uvicorn
 
