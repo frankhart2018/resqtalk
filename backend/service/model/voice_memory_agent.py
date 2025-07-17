@@ -6,6 +6,7 @@ from langchain_core.runnables import RunnableConfig
 import json
 import uuid
 import logging
+from pathlib import Path
 
 from service.utils.environment import REDIS_HOST
 from service.utils.wav_utils import load_audio_from_file
@@ -146,3 +147,6 @@ Now extract information from this message. Return only valid JSON with no extra 
             graph.invoke(
                 {"messages": [{"role": "user", "content": user_message}]}, config
             )
+
+        file = Path(user_message)
+        file.unlink()

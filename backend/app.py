@@ -1,8 +1,7 @@
 from contextlib import asynccontextmanager
 import logging
 import asyncio
-from fastapi import FastAPI, WebSocket, HTTPException
-from fastapi.websockets import WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -200,46 +199,25 @@ async def switch_mode(mode: Mode):
     return {"status": "ok"}
 
 
-@app.websocket("/voice-stream")
-async def websocket_endpoint(websocket: WebSocket):
+@app.post("/vprompt")
+async def voice_stream(file: UploadFile = File(...)):
     if current_mode != Mode.VOICE:
-        return HTTPException(
+        raise HTTPException(
             status_code=500,
             detail="Switch to voice mode first using '/switch?mode='voice''",
         )
 
     filename = Path(f"{uuid.uuid4()}.wav")
+    contents = await file.read()
+    with open(filename, "wb") as f:
+        f.write(contents)
 
-    await websocket.accept()
-    try:
-        audio_buffer = bytearray()
-        while True:
-            message = await websocket.receive()
-            if "bytes" in message:
-                audio_buffer.extend(message["bytes"])
-                logger.info(f"Received chunk of size: {len(message['bytes'])}")
-            elif "text" in message and message["text"] == "DONE":
-                # This assumes client sends a "DONE" message to indicate end
-                logger.info(f"Total audio received: {len(audio_buffer)} bytes")
+    output = voice_agent.generate(str(filename))
+    logger.info(f"Output from model: {output}")
 
-                with open(filename, "wb") as f:
-                    f.write(audio_buffer)
+    memory_queue.put_nowait(str(filename))
 
-                output = voice_agent.generate(str(filename))
-                logger.info(f"Output from model: {output}")
-
-                memory_queue.put_nowait(str(filename))
-                await websocket.send_text(output)
-
-                # Wait till the file is read by memory agent
-                await asyncio.sleep(2)
-
-                await websocket.send_text("Received audio successfully!")
-                break
-    except WebSocketDisconnect:
-        logger.info("Client disconnected from voice stream")
-    finally:
-        filename.unlink(missing_ok=True)
+    return {"response": output}
 
 
 @app.get("/mode")
