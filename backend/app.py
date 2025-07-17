@@ -141,7 +141,7 @@ async def generate_aprompt(request: PromptRequest):
     if current_mode != Mode.TEXT:
         raise HTTPException(
             status_code=500,
-            detail="Switch to text mode first using '/switch?mode='voice''",
+            detail="Switch to text mode first using '/switch?mode='text''",
         )
 
     prompt_with_tools = f"{request.frontendTools}\n\n{request.prompt}"
@@ -202,7 +202,11 @@ async def switch_mode(mode: Mode):
 
 @app.websocket("/voice-stream")
 async def websocket_endpoint(websocket: WebSocket):
-    # TODO: Validate if the current mode is "VOICE"
+    if current_mode != Mode.VOICE:
+        return HTTPException(
+            status_code=500,
+            detail="Switch to voice mode first using '/switch?mode='voice''",
+        )
 
     filename = Path(f"{uuid.uuid4()}.wav")
 
