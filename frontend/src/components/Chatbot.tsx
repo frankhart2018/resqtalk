@@ -25,7 +25,7 @@ let capturedStream: MediaStream | null = null;
 let mediaRecorder: IMediaRecorder | null = null;
 let encoderRegistered = false;
 const API_HOST =
-  import.meta.env.VITE_API_BASE || `ws://${window.location.hostname}:8000`;
+  import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8000`;
 
 const registerWavEncoder = async () => {
   if (!encoderRegistered) {
@@ -140,46 +140,43 @@ const Chatbot: React.FC = () => {
     });
 
   const handleToggleRecording = async () => {
-    console.log("Toggle recording. Current state:", isRecording);
     if (isRecording) {
       setIsRecording(false);
       setIsLoading(true);
 
       try {
         const audioBlob = await stopRecordingAudio();
-        if (!audioBlob) throw new Error("Recording failed");
+        if (!audioBlob) throw new Error("Recording failed to produce a blob.");
 
-        const ws = new WebSocket(`${API_HOST}/voice-stream`);
+        const formData = new FormData();
+        formData.append("file", audioBlob, "recording.wav");
 
-        const transcription = await new Promise<string>((resolve, reject) => {
-          ws.onopen = () => {
-            console.log("📡 WebSocket open. Sending audio...");
-            audioBlob.arrayBuffer().then((buffer) => {
-              ws.send(buffer);
-              ws.send("DONE");
-            });
-          };
-
-          ws.onmessage = (event) => {
-            console.log("📨 Transcription received:", event.data);
-            resolve(event.data);
-            ws.close();
-          };
-
-          ws.onerror = (err) => reject(err);
-          ws.onclose = () => console.log("🔌 WebSocket closed");
+        const response = await fetch(`${API_HOST}/vprompt`, {
+          method: "POST",
+          body: formData,
+          headers: {
+            Accept: "application/json",
+            "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
+            "CF-Access-Client-Secret":
+              import.meta.env.VITE_CF_CLIENT_SECRET || "",
+          },
         });
 
-        if (transcription.trim()) {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        const transcription = result.response;
+
+        if (transcription && transcription.trim()) {
           appendMessage({ text: transcription, sender: "bot" });
-          setInputValue(transcription);
         }
       } catch (error) {
         console.error("Error processing audio:", error);
         replaceLastBotMessage("Error: Could not process audio recording.");
       } finally {
         setIsLoading(false);
-        setInputValue("");
       }
     } else {
       setIsRecording(true);
