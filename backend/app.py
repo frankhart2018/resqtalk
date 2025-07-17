@@ -36,7 +36,7 @@ memory_queue: Optional[asyncio.Queue] = None
 comm_agent: Optional[CommunicationAgent] = None
 voice_agent: Optional[VoiceCommunicationAgent] = None
 voice_memory_agent: Optional[VoiceMemoryAgent] = None
-current_mode: Mode = Mode.VOICE
+current_mode: Mode = Mode.TEXT
 
 
 async def memory_processor():
@@ -65,10 +65,8 @@ async def lifespan(app: FastAPI):
     # Load the ML model
     global prompts_store, memory_agent, memory_queue, comm_agent, voice_agent, voice_memory_agent
     prompts_store = PromptsStore()
-    # memory_agent = MemoryAgent()
-    # comm_agent = CommunicationAgent()
-    voice_agent = VoiceCommunicationAgent()
-    voice_memory_agent = VoiceMemoryAgent()
+    memory_agent = MemoryAgent()
+    comm_agent = CommunicationAgent()
     memory_queue = asyncio.Queue(maxsize=1000)
 
     memory_task = asyncio.create_task(memory_processor())
