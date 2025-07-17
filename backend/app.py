@@ -60,8 +60,6 @@ async def memory_processor():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # TODO: Switch back to default as text mode once frontend starts requesting mode change for voice
-
     # Load the ML model
     global prompts_store, memory_agent, memory_queue, comm_agent, voice_agent, voice_memory_agent
     prompts_store = PromptsStore()
