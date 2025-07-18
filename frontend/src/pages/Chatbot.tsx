@@ -11,7 +11,7 @@ import remarkGfm from "remark-gfm";
 import "./Chatbot.css";
 import ThemeToggle from "../components/ThemeToggle";
 import ModeToggle from "../components/ModeToggle";
-import { executeToolCall, getPromptWithTools } from "../tools/tool-utils";
+import { executeToolCall } from "../tools/tool-utils";
 import {
   MediaRecorder as ExtendableMediaRecorder,
   type IMediaRecorder,
@@ -19,13 +19,18 @@ import {
   register,
 } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
+import {
+  getCurrentMode,
+  getTextModeResponse,
+  getVoiceModeResponse,
+  switchMode,
+} from "../api/api";
+import type { GetCurrentModeResponse } from "../api/model";
 
 let audioBlobs: Blob[] = [];
 let capturedStream: MediaStream | null = null;
 let mediaRecorder: IMediaRecorder | null = null;
 let encoderRegistered = false;
-const API_HOST =
-  import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8000`;
 
 const registerWavEncoder = async () => {
   if (!encoderRegistered) {
@@ -51,23 +56,9 @@ const Chatbot: React.FC = () => {
       console.error("Encoder registration failed:", err)
     );
 
-    fetch(`${API_HOST}/mode`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-        "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-        "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
-      },
-    })
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        }
-      })
-      .then((data) => {
-        setMode(data.mode);
-      });
+    getCurrentMode().then((data: GetCurrentModeResponse) => {
+      setMode(data.mode);
+    });
   }, []);
 
   useEffect(() => {
@@ -150,26 +141,7 @@ const Chatbot: React.FC = () => {
         const audioBlob = await stopRecordingAudio();
         if (!audioBlob) throw new Error("Recording failed to produce a blob.");
 
-        const formData = new FormData();
-        formData.append("file", audioBlob, "recording.wav");
-
-        const response = await fetch(`${API_HOST}/generate/voice`, {
-          method: "POST",
-          body: formData,
-          headers: {
-            Accept: "application/json",
-            "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-            "CF-Access-Client-Secret":
-              import.meta.env.VITE_CF_CLIENT_SECRET || "",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        const transcription = result.response;
+        const transcription = (await getVoiceModeResponse(audioBlob)).response;
 
         if (transcription && transcription.trim()) {
           appendMessage({ text: transcription, sender: "bot" });
@@ -195,24 +167,7 @@ const Chatbot: React.FC = () => {
   ): Promise<string> => {
     let replyData = "";
     try {
-      const response = await fetch(`${API_HOST}/generate/text`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "text/event-stream",
-          "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-          "CF-Access-Client-Secret":
-            import.meta.env.VITE_CF_CLIENT_SECRET || "",
-        },
-        body: JSON.stringify({
-          frontendTools: getPromptWithTools(),
-          prompt: prompt,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const reader = response.body?.getReader();
+      const reader = await getTextModeResponse(prompt);
       const decoder = new TextDecoder();
       if (!reader) {
         throw new Error("No reader available");
@@ -310,18 +265,7 @@ const Chatbot: React.FC = () => {
     const newMode = mode === "text" ? "voice" : "text";
     setMode((prevMode) => (prevMode === "text" ? "voice" : "text"));
 
-    const response = await fetch(`${API_HOST}/mode/switch?mode=${newMode}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-        "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-        "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    switchMode(newMode);
   };
 
   return (
