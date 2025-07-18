@@ -105,11 +105,6 @@ services:
     volumes:
       - ./ollama_data:/root/.ollama
 
-  mongo:
-    image: mongo:bionic
-    ports:
-      - "27017:27017"
-
   redis:
     image: redis:latest
     ports:
