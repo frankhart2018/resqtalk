@@ -1,4 +1,3 @@
-// Chatbot.tsx
 import React, {
   useState,
   useRef,
@@ -9,23 +8,25 @@ import React, {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./Chatbot.css";
-import ThemeToggle from "./ThemeToggle";
-import ModeToggle from "./ModeToggle";
-import { executeToolCall, getPromptWithTools } from "../tools/tool-utils";
-import {
-  MediaRecorder as ExtendableMediaRecorder,
-  type IMediaRecorder,
-  type IBlobEvent,
-  register,
-} from "extendable-media-recorder";
+import ThemeToggle from "../components/ThemeToggle";
+import ModeToggle from "../components/ModeToggle";
+import { executeToolCall } from "../tools/tool-utils";
+import { register } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
+import {
+  getCurrentMode,
+  getTextModeResponse,
+  getVoiceModeResponse,
+  switchMode,
+} from "../api/api";
+import type { GetCurrentModeResponse } from "../api/model";
+import {
+  startRecordingAudio,
+  stopRecordingAudio,
+} from "../utils/recording-utils";
+import { textResponseIteratorCleaner } from "../utils/stream-iterator";
 
-let audioBlobs: Blob[] = [];
-let capturedStream: MediaStream | null = null;
-let mediaRecorder: IMediaRecorder | null = null;
 let encoderRegistered = false;
-const API_HOST =
-  import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8000`;
 
 const registerWavEncoder = async () => {
   if (!encoderRegistered) {
@@ -46,36 +47,30 @@ const Chatbot: React.FC = () => {
   const [mode, setMode] = useState("text");
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
+  /////////////////////////////////////////////////////////////////
+  // STATE CHANGE PROCESSORS
+  ////////////////////////////////////////////////////////////////
   useEffect(() => {
     registerWavEncoder().catch((err) =>
       console.error("Encoder registration failed:", err)
     );
 
-    fetch(`${API_HOST}/mode`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-        "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-        "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
-      },
-    })
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        }
-      })
-      .then((data) => {
-        setMode(data.mode);
-      });
+    getCurrentMode().then((data: GetCurrentModeResponse) => {
+      setMode(data.mode);
+    });
   }, []);
 
-  const scrollToBottom = () => {
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [messages]);
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(() => {
+    console.log("Recording state updated:", isRecording);
+  }, [isRecording]);
 
+  /////////////////////////////////////////////////////////////////
+  // MESSAGE HELPERS
+  /////////////////////////////////////////////////////////////////
   const appendMessage = (message: { text: string; sender: "bot" | "user" }) => {
     setMessages((prevMessages) => [...prevMessages, message]);
   };
@@ -94,51 +89,9 @@ const Chatbot: React.FC = () => {
     });
   };
 
-  const startRecordingAudio = async () => {
-    try {
-      if (!ExtendableMediaRecorder.isTypeSupported("audio/wav")) {
-        throw new Error("audio/wav not supported by this browser.");
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      capturedStream = stream;
-      audioBlobs = [];
-
-      mediaRecorder = new ExtendableMediaRecorder(stream, {
-        mimeType: "audio/wav",
-      });
-
-      mediaRecorder.addEventListener(
-        "dataavailable",
-        function (this: IMediaRecorder, event: IBlobEvent) {
-          audioBlobs.push(event.data);
-        }
-      );
-
-      mediaRecorder.start();
-      console.log("🎙️ Recording started with type:", mediaRecorder.mimeType);
-    } catch (error) {
-      console.error("Failed to start recording:", error);
-      alert("Microphone permission denied or WAV not supported.");
-    }
-  };
-
-  const stopRecordingAudio = (): Promise<Blob | null> =>
-    new Promise((resolve) => {
-      if (!mediaRecorder) return resolve(null);
-
-      mediaRecorder.addEventListener("stop", () => {
-        const audioBlob = new Blob(audioBlobs, { type: "audio/wav" });
-        console.log("🎙️ Recording stopped. Blob size:", audioBlob.size);
-        if (capturedStream) {
-          capturedStream.getTracks().forEach((track) => track.stop());
-        }
-        resolve(audioBlob);
-      });
-
-      mediaRecorder.stop();
-    });
-
+  /////////////////////////////////////////////////////////////////
+  // MODEL CALLING HELPERS
+  /////////////////////////////////////////////////////////////////
   const handleToggleRecording = async () => {
     if (isRecording) {
       setIsRecording(false);
@@ -148,26 +101,7 @@ const Chatbot: React.FC = () => {
         const audioBlob = await stopRecordingAudio();
         if (!audioBlob) throw new Error("Recording failed to produce a blob.");
 
-        const formData = new FormData();
-        formData.append("file", audioBlob, "recording.wav");
-
-        const response = await fetch(`${API_HOST}/generate/voice`, {
-          method: "POST",
-          body: formData,
-          headers: {
-            Accept: "application/json",
-            "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-            "CF-Access-Client-Secret":
-              import.meta.env.VITE_CF_CLIENT_SECRET || "",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        const transcription = result.response;
+        const transcription = (await getVoiceModeResponse(audioBlob)).response;
 
         if (transcription && transcription.trim()) {
           appendMessage({ text: transcription, sender: "bot" });
@@ -193,59 +127,25 @@ const Chatbot: React.FC = () => {
   ): Promise<string> => {
     let replyData = "";
     try {
-      const response = await fetch(`${API_HOST}/generate/text`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "text/event-stream",
-          "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-          "CF-Access-Client-Secret":
-            import.meta.env.VITE_CF_CLIENT_SECRET || "",
-        },
-        body: JSON.stringify({
-          frontendTools: getPromptWithTools(),
-          prompt: prompt,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+      const reader = await getTextModeResponse(prompt);
       if (!reader) {
         throw new Error("No reader available");
       }
-      let isFirstChunk = true;
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          console.log("Stream ended");
-          break;
+
+      for await (const data of textResponseIteratorCleaner(reader)) {
+        replyData += data.text;
+        if (data.isFirstChunk) {
+          setIsLoading(false);
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { sender: "bot", text: replyData },
+          ]);
+        } else {
+          setMessages((prevMessages) => [
+            ...prevMessages.slice(0, prevMessages.length - 1),
+            { sender: "bot", text: replyData },
+          ]);
         }
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-        lines.forEach((line: string) => {
-          if (line.startsWith("data: ")) {
-            const data = line.substring(6);
-            if (data.trim()) {
-              console.log("Received chunk:", data);
-              replyData += data;
-              if (isFirstChunk) {
-                isFirstChunk = false;
-                setIsLoading(false);
-                setMessages((prevMessages) => [
-                  ...prevMessages,
-                  { sender: "bot", text: replyData },
-                ]);
-              } else {
-                setMessages((prevMessages) => [
-                  ...prevMessages.slice(0, prevMessages.length - 1),
-                  { sender: "bot", text: replyData },
-                ]);
-              }
-            }
-          }
-        });
       }
     } catch (error: unknown) {
       console.error("Error:", error);
@@ -300,14 +200,9 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    console.log("Recording state updated:", isRecording);
-  }, [isRecording]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
+  /////////////////////////////////////////////////////////////////
+  // TOGGLE HANDLERS
+  /////////////////////////////////////////////////////////////////
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
@@ -316,20 +211,12 @@ const Chatbot: React.FC = () => {
     const newMode = mode === "text" ? "voice" : "text";
     setMode((prevMode) => (prevMode === "text" ? "voice" : "text"));
 
-    const response = await fetch(`${API_HOST}/mode/switch?mode=${newMode}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-        "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-        "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    switchMode(newMode);
   };
 
+  /////////////////////////////////////////////////////////////////
+  // JSX
+  /////////////////////////////////////////////////////////////////
   return (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
@@ -376,7 +263,7 @@ const Chatbot: React.FC = () => {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="How can I help you in this disaster situation?"
-          disabled={isLoading}
+          disabled={isLoading || mode === "voice"}
         />
         {mode === "voice" && (
           <button
