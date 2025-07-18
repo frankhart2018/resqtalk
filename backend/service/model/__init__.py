@@ -1,4 +1,2 @@
-from service.model.comm_agent import CommunicationAgent
-from service.model.memory_agent import MemoryAgent
-from service.model.voice_agent import VoiceCommunicationAgent
-from service.model.voice_memory_agent import VoiceMemoryAgent
+from service.model.hf_client import HuggingFaceGemma3nClient
+from service.model.ollama_client import LangchainOllamaGemmaClient

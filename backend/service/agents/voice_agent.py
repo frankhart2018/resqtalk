@@ -1,21 +1,16 @@
-from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain_core.runnables import RunnableConfig
 from langgraph.store.redis import RedisStore
 from langgraph.store.base import BaseStore
 from langfuse.langchain import CallbackHandler
-import sys
 
 from service.utils.environment import REDIS_HOST
-from service.model.ollama_client import LangchainOllamaGemmaClient
+from service.agents.voice_agent_base import VoiceAgentBase
+from service.prompts import COMMUNICATION_AGENT_PROMPT
 
 
-class CommunicationAgent:
-    def __init__(self):
-        model_obj = LangchainOllamaGemmaClient()
-        self.model = model_obj.model
-
-    async def __call_model(
+class VoiceCommunicationAgent(VoiceAgentBase):
+    def __call_model(
         self, state: MessagesState, config: RunnableConfig, *, store: BaseStore
     ):
         user_id = config["configurable"]["user_id"]
@@ -24,14 +19,15 @@ class CommunicationAgent:
 
         info = "\n".join([str(d.value) for d in memories])
 
-        system_msg = f"""You are a helpful assistant who is an expert in disaster management. 
-            Here are some details about the user you are talking to: {info}"""
-        response = await self.model.ainvoke(
-            [{"role": "system", "content": system_msg}] + state["messages"], config
+        system_msg = COMMUNICATION_AGENT_PROMPT.format(info=info)
+        audio_path = state["messages"][-1].content
+        messages = self.construct_model_messages(
+            audio_path=audio_path, system_msg=system_msg
         )
-        return {"messages": response}
 
-    async def generate(self, prompt: str):
+        return {"messages": self.model.invoke(messages)}
+
+    def generate(self, user_voice_file: str):
         with RedisStore.from_conn_string(REDIS_HOST) as store:
             store.setup()
 
@@ -50,11 +46,7 @@ class CommunicationAgent:
                 "callbacks": [langfuse_handler],
             }
 
-            async for msg, _ in graph.astream(
-                {"messages": [{"role": "user", "content": prompt}]},
+            return graph.invoke(
+                {"messages": [{"role": "user", "content": user_voice_file}]},
                 config,
-                stream_mode="messages",
-            ):
-                if msg.content:
-                    sys.stdout.flush()
-                    yield msg.content
+            )["messages"][-1].content

@@ -3,7 +3,6 @@ import logging
 import asyncio
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from typing import Optional
 from fastapi.responses import StreamingResponse
 from enum import Enum
@@ -15,15 +14,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from service.model import (
+from service.agents import (
     CommunicationAgent,
     MemoryAgent,
     VoiceCommunicationAgent,
     VoiceMemoryAgent,
 )
+from service.data_models.generate_text import PromptRequest
 
 
 logging.basicConfig(level=logging.DEBUG)
+otlp_exporter_logger = logging.getLogger(
+    "opentelemetry.exporter.otlp.proto.http.trace_exporter"
+)
+otlp_exporter_logger.addHandler(logging.NullHandler())
+otlp_exporter_logger.propagate = False
 logger = logging.getLogger(__name__)
 
 
@@ -61,7 +66,7 @@ async def memory_processor():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load the ML model
+    # Initialization
     global memory_agent, memory_queue, comm_agent, voice_agent, voice_memory_agent
     memory_agent = MemoryAgent()
     comm_agent = CommunicationAgent()
@@ -82,7 +87,7 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
-    # Clean up the ML models and release the resources
+    # Clean up
     memory_agent = None
     memory_queue = None
     comm_agent = None
@@ -100,12 +105,7 @@ app.add_middleware(
 )
 
 
-class PromptRequest(BaseModel):
-    frontendTools: str
-    prompt: str
-
-
-@app.post("/aprompt")
+@app.post("/generate/text")
 async def generate_aprompt(request: PromptRequest):
     global current_mode
 
@@ -128,7 +128,28 @@ async def generate_aprompt(request: PromptRequest):
     return StreamingResponse(generate_chunks(), media_type="text/event-stream")
 
 
-@app.post("/switch")
+@app.post("/generate/voice")
+async def voice_stream(file: UploadFile = File(...)):
+    if current_mode != Mode.VOICE:
+        raise HTTPException(
+            status_code=500,
+            detail="Switch to voice mode first using '/switch?mode='voice''",
+        )
+
+    filename = Path(f"{uuid.uuid4()}.wav")
+    contents = await file.read()
+    with open(filename, "wb") as f:
+        f.write(contents)
+
+    output = voice_agent.generate(str(filename))
+    logger.info(f"Output from model: {output}")
+
+    memory_queue.put_nowait(str(filename))
+
+    return {"response": output}
+
+
+@app.post("/mode/switch")
 async def switch_mode(mode: Mode):
     global current_mode
     global comm_agent, voice_agent
@@ -164,27 +185,6 @@ async def switch_mode(mode: Mode):
     current_mode = mode
 
     return {"status": "ok"}
-
-
-@app.post("/vprompt")
-async def voice_stream(file: UploadFile = File(...)):
-    if current_mode != Mode.VOICE:
-        raise HTTPException(
-            status_code=500,
-            detail="Switch to voice mode first using '/switch?mode='voice''",
-        )
-
-    filename = Path(f"{uuid.uuid4()}.wav")
-    contents = await file.read()
-    with open(filename, "wb") as f:
-        f.write(contents)
-
-    output = voice_agent.generate(str(filename))
-    logger.info(f"Output from model: {output}")
-
-    memory_queue.put_nowait(str(filename))
-
-    return {"response": output}
 
 
 @app.get("/mode")

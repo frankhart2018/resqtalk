@@ -7,7 +7,6 @@ RUN pip install uv
 
 # Copy dependency files and install dependencies
 COPY pyproject.toml uv.lock ./ 
-RUN uv sync --extra dev
 
 ENV PATH="/app/.venv/bin:$PATH"
 
