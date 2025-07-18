@@ -3,6 +3,7 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.store.redis import RedisStore
 from langgraph.store.base import BaseStore
 from langchain_core.runnables import RunnableConfig
+from langfuse.langchain import CallbackHandler
 import json
 import uuid
 import logging
@@ -141,9 +142,14 @@ Now extract information from this message. Return only valid JSON with no extra 
             builder.add_edge("store_memory", "get_memory_to_store")
             builder.add_edge("get_memory_to_store", END)
 
+            langfuse_handler = CallbackHandler()
+
             graph = builder.compile(store=store)
 
-            config = {"configurable": {"thread_id": "1", "user_id": "1"}}
+            config = {
+                "configurable": {"thread_id": "1", "user_id": "1"},
+                "callbacks": [langfuse_handler],
+            }
             graph.invoke(
                 {"messages": [{"role": "user", "content": user_message}]}, config
             )

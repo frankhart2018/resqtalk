@@ -3,6 +3,7 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain_core.runnables import RunnableConfig
 from langgraph.store.redis import RedisStore
 from langgraph.store.base import BaseStore
+from langfuse.langchain import CallbackHandler
 import sys
 
 from service.utils.environment import REDIS_HOST
@@ -40,9 +41,14 @@ class CommunicationAgent:
             builder.add_edge(START, "call_model")
             builder.add_edge("call_model", END)
 
+            langfuse_handler = CallbackHandler()
+
             graph = builder.compile(store=store)
 
-            config = {"configurable": {"thread_id": "1", "user_id": "1"}}
+            config = {
+                "configurable": {"thread_id": "1", "user_id": "1"},
+                "callbacks": [langfuse_handler],
+            }
 
             async for msg, _ in graph.astream(
                 {"messages": [{"role": "user", "content": prompt}]},

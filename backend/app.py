@@ -10,6 +10,10 @@ from enum import Enum
 import gc
 import uuid
 from pathlib import Path
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 from service.model import (
     CommunicationAgent,
@@ -17,7 +21,6 @@ from service.model import (
     VoiceCommunicationAgent,
     VoiceMemoryAgent,
 )
-from service.utils.prompts_store import PromptsStore
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -29,7 +32,6 @@ class Mode(Enum):
     VOICE = "voice"
 
 
-prompts_store: Optional[PromptsStore] = None
 memory_agent: Optional[MemoryAgent] = None
 memory_queue: Optional[asyncio.Queue] = None
 comm_agent: Optional[CommunicationAgent] = None
@@ -60,8 +62,7 @@ async def memory_processor():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-    global prompts_store, memory_agent, memory_queue, comm_agent, voice_agent, voice_memory_agent
-    prompts_store = PromptsStore()
+    global memory_agent, memory_queue, comm_agent, voice_agent, voice_memory_agent
     memory_agent = MemoryAgent()
     comm_agent = CommunicationAgent()
     memory_queue = asyncio.Queue(maxsize=1000)
@@ -82,7 +83,6 @@ async def lifespan(app: FastAPI):
             pass
 
     # Clean up the ML models and release the resources
-    prompts_store = None
     memory_agent = None
     memory_queue = None
     comm_agent = None
@@ -105,34 +105,6 @@ class PromptRequest(BaseModel):
     prompt: str
 
 
-class ToolCallResultRequest(BaseModel):
-    result: str
-
-
-@app.post("/prompt")
-async def generate_prompt(request: PromptRequest):
-    prompt_with_tools = f"{request.frontendTools}\n\n{request.prompt}"
-    response = []
-    async for chunk in comm_agent.generate(prompt_with_tools):
-        response.append(chunk)
-    response = "".join(response)
-    prompt_id = prompts_store.store_prompt_and_result(
-        prompt=prompt_with_tools, response=response
-    )
-
-    # Fire and forget into memory queue and return HTTP result
-    memory_queue.put_nowait(request.prompt)
-    return {"response": response, "promptId": prompt_id}
-
-
-@app.patch("/tool-call/{promptId}")
-async def update_tool_call(promptId: str, request: ToolCallResultRequest):
-    prompts_store.update_tool_call_result(
-        prompt_id=promptId, tool_call_result=request.result
-    )
-    return {"status": "ok"}
-
-
 @app.post("/aprompt")
 async def generate_aprompt(request: PromptRequest):
     global current_mode
@@ -151,11 +123,6 @@ async def generate_aprompt(request: PromptRequest):
             full_response.append(chunk)
             yield f"data: {chunk}\n\n"
 
-        # These operations happen after the entire message has been streamed
-        response_str = "".join(full_response)
-        prompt_id = prompts_store.store_prompt_and_result(
-            prompt=prompt_with_tools, response=response_str
-        )
         memory_queue.put_nowait(request.prompt)
 
     return StreamingResponse(generate_chunks(), media_type="text/event-stream")
