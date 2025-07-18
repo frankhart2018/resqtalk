@@ -1,4 +1,3 @@
-// Chatbot.tsx
 import React, {
   useState,
   useRef,
@@ -12,12 +11,7 @@ import "./Chatbot.css";
 import ThemeToggle from "../components/ThemeToggle";
 import ModeToggle from "../components/ModeToggle";
 import { executeToolCall } from "../tools/tool-utils";
-import {
-  MediaRecorder as ExtendableMediaRecorder,
-  type IMediaRecorder,
-  type IBlobEvent,
-  register,
-} from "extendable-media-recorder";
+import { register } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
 import {
   getCurrentMode,
@@ -26,10 +20,11 @@ import {
   switchMode,
 } from "../api/api";
 import type { GetCurrentModeResponse } from "../api/model";
+import {
+  startRecordingAudio,
+  stopRecordingAudio,
+} from "../utils/recording-utils";
 
-let audioBlobs: Blob[] = [];
-let capturedStream: MediaStream | null = null;
-let mediaRecorder: IMediaRecorder | null = null;
 let encoderRegistered = false;
 
 const registerWavEncoder = async () => {
@@ -51,6 +46,9 @@ const Chatbot: React.FC = () => {
   const [mode, setMode] = useState("text");
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
+  /////////////////////////////////////////////////////////////////
+  // STATE CHANGE PROCESSORS
+  ////////////////////////////////////////////////////////////////
   useEffect(() => {
     registerWavEncoder().catch((err) =>
       console.error("Encoder registration failed:", err)
@@ -69,6 +67,9 @@ const Chatbot: React.FC = () => {
     console.log("Recording state updated:", isRecording);
   }, [isRecording]);
 
+  /////////////////////////////////////////////////////////////////
+  // MESSAGE HELPERS
+  /////////////////////////////////////////////////////////////////
   const appendMessage = (message: { text: string; sender: "bot" | "user" }) => {
     setMessages((prevMessages) => [...prevMessages, message]);
   };
@@ -87,51 +88,9 @@ const Chatbot: React.FC = () => {
     });
   };
 
-  const startRecordingAudio = async () => {
-    try {
-      if (!ExtendableMediaRecorder.isTypeSupported("audio/wav")) {
-        throw new Error("audio/wav not supported by this browser.");
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      capturedStream = stream;
-      audioBlobs = [];
-
-      mediaRecorder = new ExtendableMediaRecorder(stream, {
-        mimeType: "audio/wav",
-      });
-
-      mediaRecorder.addEventListener(
-        "dataavailable",
-        function (this: IMediaRecorder, event: IBlobEvent) {
-          audioBlobs.push(event.data);
-        }
-      );
-
-      mediaRecorder.start();
-      console.log("🎙️ Recording started with type:", mediaRecorder.mimeType);
-    } catch (error) {
-      console.error("Failed to start recording:", error);
-      alert("Microphone permission denied or WAV not supported.");
-    }
-  };
-
-  const stopRecordingAudio = (): Promise<Blob | null> =>
-    new Promise((resolve) => {
-      if (!mediaRecorder) return resolve(null);
-
-      mediaRecorder.addEventListener("stop", () => {
-        const audioBlob = new Blob(audioBlobs, { type: "audio/wav" });
-        console.log("🎙️ Recording stopped. Blob size:", audioBlob.size);
-        if (capturedStream) {
-          capturedStream.getTracks().forEach((track) => track.stop());
-        }
-        resolve(audioBlob);
-      });
-
-      mediaRecorder.stop();
-    });
-
+  /////////////////////////////////////////////////////////////////
+  // MODEL CALLING HELPERS
+  /////////////////////////////////////////////////////////////////
   const handleToggleRecording = async () => {
     if (isRecording) {
       setIsRecording(false);
@@ -257,6 +216,9 @@ const Chatbot: React.FC = () => {
     }
   };
 
+  /////////////////////////////////////////////////////////////////
+  // TOGGLE HANDLERS
+  /////////////////////////////////////////////////////////////////
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
@@ -268,6 +230,9 @@ const Chatbot: React.FC = () => {
     switchMode(newMode);
   };
 
+  /////////////////////////////////////////////////////////////////
+  // JSX
+  /////////////////////////////////////////////////////////////////
   return (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
