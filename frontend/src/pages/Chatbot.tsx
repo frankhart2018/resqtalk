@@ -24,6 +24,7 @@ import {
   startRecordingAudio,
   stopRecordingAudio,
 } from "../utils/recording-utils";
+import { textResponseIteratorCleaner } from "../utils/stream-iterator";
 
 let encoderRegistered = false;
 
@@ -127,41 +128,24 @@ const Chatbot: React.FC = () => {
     let replyData = "";
     try {
       const reader = await getTextModeResponse(prompt);
-      const decoder = new TextDecoder();
       if (!reader) {
         throw new Error("No reader available");
       }
-      let isFirstChunk = true;
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          console.log("Stream ended");
-          break;
+
+      for await (const data of textResponseIteratorCleaner(reader)) {
+        replyData += data.text;
+        if (data.isFirstChunk) {
+          setIsLoading(false);
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { sender: "bot", text: replyData },
+          ]);
+        } else {
+          setMessages((prevMessages) => [
+            ...prevMessages.slice(0, prevMessages.length - 1),
+            { sender: "bot", text: replyData },
+          ]);
         }
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-        lines.forEach((line: string) => {
-          if (line.startsWith("data: ")) {
-            const data = line.substring(6);
-            if (data.trim()) {
-              console.log("Received chunk:", data);
-              replyData += data;
-              if (isFirstChunk) {
-                isFirstChunk = false;
-                setIsLoading(false);
-                setMessages((prevMessages) => [
-                  ...prevMessages,
-                  { sender: "bot", text: replyData },
-                ]);
-              } else {
-                setMessages((prevMessages) => [
-                  ...prevMessages.slice(0, prevMessages.length - 1),
-                  { sender: "bot", text: replyData },
-                ]);
-              }
-            }
-          }
-        });
       }
     } catch (error: unknown) {
       console.error("Error:", error);

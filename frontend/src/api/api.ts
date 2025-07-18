@@ -1,5 +1,6 @@
 import { getPromptWithTools } from "../tools/tool-utils";
 import type { GetCurrentModeResponse, VoiceModeResponse } from "./model";
+import type { OptionalReadableBytesBuffer } from "./types";
 
 const API_HOST =
   import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8000`;
@@ -50,9 +51,7 @@ export const getVoiceModeResponse = async (
 
 export const getTextModeResponse = async (
   prompt: string
-): Promise<
-  ReadableStreamDefaultReader<Uint8Array<ArrayBufferLike>> | undefined
-> => {
+): Promise<OptionalReadableBytesBuffer> => {
   const response = await fetch(`${API_HOST}/generate/text`, {
     method: "POST",
     headers: {
