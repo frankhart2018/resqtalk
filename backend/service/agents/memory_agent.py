@@ -9,6 +9,7 @@ import uuid
 import logging
 
 from service.utils.environment import REDIS_HOST
+from service.utils.parsing_utils import extract_memory_json
 from service.model import LangchainOllamaGemmaClient
 from service.prompts import MEMORY_EXTRACTION_PROMPT
 
@@ -37,42 +38,17 @@ class MemoryAgent:
     ):
         try:
             memory_content = state["messages"][-1].content
-
-            if not memory_content or memory_content.strip() == "":
-                logging.error("Empty memory content received")
-                return
-
-            cleaned_content = memory_content.strip()
-
-            if cleaned_content.startswith("Output:"):
-                cleaned_content = cleaned_content.replace("Output:", "").strip()
-
-            # Handle JSON wrapped in markdown code blocks
-            if "```json" in cleaned_content:
-                start = cleaned_content.find("```json") + 7
-                end = cleaned_content.find("```", start)
-                if end != -1:
-                    cleaned_content = cleaned_content[start:end].strip()
-            elif "```" in cleaned_content:
-                start = cleaned_content.find("```") + 3
-                end = cleaned_content.find("```", start)
-                if end != -1:
-                    cleaned_content = cleaned_content[start:end].strip()
-
-            store_memory_msg = json.loads(cleaned_content)
+            store_memory_msg = extract_memory_json(memory_content)
 
             if store_memory_msg:
                 user_id = config["configurable"]["user_id"]
                 namespace = ("memories", user_id)
                 store.put(namespace, str(uuid.uuid4()), store_memory_msg)
-                logging.info(f"Successfully added new memory: {store_memory_msg}")
+                logger.info(f"Successfully added new memory: {store_memory_msg}")
             else:
-                logging.info("No memory to store (empty JSON)")
-        except json.JSONDecodeError as e:
-            logging.error(f"Failed to parse JSON: {e}")
-            logging.error(f"Raw content was: '{memory_content}'")
+                logger.info("No memory to store (empty JSON)")
         except Exception as e:
-            logging.error(f"Failed to store memory: {e}")
+            logger.error(f"Failed to store memory: {e}")
 
     async def store_memory(self, user_message: str):
         logger.info(f"Starting to add memory for user message: '{user_message}'")

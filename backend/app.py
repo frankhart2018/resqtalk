@@ -24,6 +24,11 @@ from service.agents import (
 
 
 logging.basicConfig(level=logging.DEBUG)
+otlp_exporter_logger = logging.getLogger(
+    "opentelemetry.exporter.otlp.proto.http.trace_exporter"
+)
+otlp_exporter_logger.addHandler(logging.NullHandler())
+otlp_exporter_logger.propagate = False
 logger = logging.getLogger(__name__)
 
 
