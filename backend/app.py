@@ -3,7 +3,6 @@ import logging
 import asyncio
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from typing import Optional
 from fastapi.responses import StreamingResponse
 from enum import Enum
@@ -21,6 +20,7 @@ from service.agents import (
     VoiceCommunicationAgent,
     VoiceMemoryAgent,
 )
+from service.data_models.generate_text import PromptRequest
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -103,11 +103,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-class PromptRequest(BaseModel):
-    frontendTools: str
-    prompt: str
 
 
 @app.post("/generate/text")
