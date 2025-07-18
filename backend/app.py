@@ -66,7 +66,7 @@ async def memory_processor():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load the ML model
+    # Initialization
     global memory_agent, memory_queue, comm_agent, voice_agent, voice_memory_agent
     memory_agent = MemoryAgent()
     comm_agent = CommunicationAgent()
@@ -87,7 +87,7 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
-    # Clean up the ML models and release the resources
+    # Clean up
     memory_agent = None
     memory_queue = None
     comm_agent = None
@@ -110,7 +110,7 @@ class PromptRequest(BaseModel):
     prompt: str
 
 
-@app.post("/aprompt")
+@app.post("/generate/text")
 async def generate_aprompt(request: PromptRequest):
     global current_mode
 
@@ -133,7 +133,28 @@ async def generate_aprompt(request: PromptRequest):
     return StreamingResponse(generate_chunks(), media_type="text/event-stream")
 
 
-@app.post("/switch")
+@app.post("/generate/voice")
+async def voice_stream(file: UploadFile = File(...)):
+    if current_mode != Mode.VOICE:
+        raise HTTPException(
+            status_code=500,
+            detail="Switch to voice mode first using '/switch?mode='voice''",
+        )
+
+    filename = Path(f"{uuid.uuid4()}.wav")
+    contents = await file.read()
+    with open(filename, "wb") as f:
+        f.write(contents)
+
+    output = voice_agent.generate(str(filename))
+    logger.info(f"Output from model: {output}")
+
+    memory_queue.put_nowait(str(filename))
+
+    return {"response": output}
+
+
+@app.post("/mode/switch")
 async def switch_mode(mode: Mode):
     global current_mode
     global comm_agent, voice_agent
@@ -169,27 +190,6 @@ async def switch_mode(mode: Mode):
     current_mode = mode
 
     return {"status": "ok"}
-
-
-@app.post("/vprompt")
-async def voice_stream(file: UploadFile = File(...)):
-    if current_mode != Mode.VOICE:
-        raise HTTPException(
-            status_code=500,
-            detail="Switch to voice mode first using '/switch?mode='voice''",
-        )
-
-    filename = Path(f"{uuid.uuid4()}.wav")
-    contents = await file.read()
-    with open(filename, "wb") as f:
-        f.write(contents)
-
-    output = voice_agent.generate(str(filename))
-    logger.info(f"Output from model: {output}")
-
-    memory_queue.put_nowait(str(filename))
-
-    return {"response": output}
 
 
 @app.get("/mode")

@@ -151,7 +151,7 @@ const Chatbot: React.FC = () => {
         const formData = new FormData();
         formData.append("file", audioBlob, "recording.wav");
 
-        const response = await fetch(`${API_HOST}/vprompt`, {
+        const response = await fetch(`${API_HOST}/generate/voice`, {
           method: "POST",
           body: formData,
           headers: {
@@ -193,7 +193,7 @@ const Chatbot: React.FC = () => {
   ): Promise<string> => {
     let replyData = "";
     try {
-      const response = await fetch(`${API_HOST}/aprompt`, {
+      const response = await fetch(`${API_HOST}/generate/text`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -316,7 +316,7 @@ const Chatbot: React.FC = () => {
     const newMode = mode === "text" ? "voice" : "text";
     setMode((prevMode) => (prevMode === "text" ? "voice" : "text"));
 
-    const response = await fetch(`${API_HOST}/switch?mode=${newMode}`, {
+    const response = await fetch(`${API_HOST}/mode/switch?mode=${newMode}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

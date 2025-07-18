@@ -46,8 +46,8 @@ class VoiceMemoryAgent(VoiceAgentBase):
         except Exception as e:
             logger.error(f"Failed to store memory: {e}")
 
-    async def store_memory(self, user_message: str):
-        logger.info(f"Starting to add memory for user message: '{user_message}'")
+    async def store_memory(self, user_voice_file: str):
+        logger.info(f"Starting to add memory for user message: '{user_voice_file}'")
         with RedisStore.from_conn_string(REDIS_HOST) as store:
             store.setup()
 
@@ -68,8 +68,8 @@ class VoiceMemoryAgent(VoiceAgentBase):
                 "callbacks": [langfuse_handler],
             }
             graph.invoke(
-                {"messages": [{"role": "user", "content": user_message}]}, config
+                {"messages": [{"role": "user", "content": user_voice_file}]}, config
             )
 
-        file = Path(user_message)
+        file = Path(user_voice_file)
         file.unlink()
