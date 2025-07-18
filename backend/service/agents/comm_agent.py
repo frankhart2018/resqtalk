@@ -7,7 +7,8 @@ from langfuse.langchain import CallbackHandler
 import sys
 
 from service.utils.environment import REDIS_HOST
-from service.model.ollama_client import LangchainOllamaGemmaClient
+from service.model import LangchainOllamaGemmaClient
+from service.prompts import COMMUNICATION_AGENT_PROMPT
 
 
 class CommunicationAgent:
@@ -24,8 +25,7 @@ class CommunicationAgent:
 
         info = "\n".join([str(d.value) for d in memories])
 
-        system_msg = f"""You are a helpful assistant who is an expert in disaster management. 
-            Here are some details about the user you are talking to: {info}"""
+        system_msg = COMMUNICATION_AGENT_PROMPT.format(info=info)
         response = await self.model.ainvoke(
             [{"role": "system", "content": system_msg}] + state["messages"], config
         )

@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from service.model import (
+from service.agents import (
     CommunicationAgent,
     MemoryAgent,
     VoiceCommunicationAgent,

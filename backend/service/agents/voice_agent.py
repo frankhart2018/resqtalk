@@ -7,7 +7,8 @@ from langfuse.langchain import CallbackHandler
 
 from service.utils.environment import REDIS_HOST
 from service.utils.wav_utils import load_audio_from_file
-from service.model.hf_client import HuggingFaceGemma3nClient
+from service.model import HuggingFaceGemma3nClient
+from service.prompts import COMMUNICATION_AGENT_PROMPT
 
 
 class VoiceCommunicationAgent:
@@ -24,9 +25,7 @@ class VoiceCommunicationAgent:
 
         info = "\n".join([str(d.value) for d in memories])
 
-        system_msg = f"""You are a helpful assistant who is an expert in disaster management.
-            Here are some details about the user you are talking to: {info}.
-            Please give the user an appropriate reply"""
+        system_msg = COMMUNICATION_AGENT_PROMPT.format(info=info)
 
         messages = [
             {

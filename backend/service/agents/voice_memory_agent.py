@@ -1,4 +1,4 @@
-from langchain_ollama import ChatOllama
+import torch
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.store.redis import RedisStore
 from langgraph.store.base import BaseStore
@@ -7,53 +7,58 @@ from langfuse.langchain import CallbackHandler
 import json
 import uuid
 import logging
+from pathlib import Path
 
 from service.utils.environment import REDIS_HOST
-from service.model.ollama_client import LangchainOllamaGemmaClient
+from service.utils.wav_utils import load_audio_from_file
+from service.model import HuggingFaceGemma3nClient
+from service.prompts import MEMORY_EXTRACTION_PROMPT
 
 
 logger = logging.getLogger(__name__)
 
 
-class MemoryAgent:
+class VoiceMemoryAgent:
     def __init__(self):
-        model_obj = LangchainOllamaGemmaClient()
-        self.model = model_obj.model
+        model_obj = HuggingFaceGemma3nClient()
+        self.model, self.processor = model_obj.model, model_obj.processor
 
     def __store_memory(
         self, state: MessagesState, config: RunnableConfig, *, store: BaseStore
     ):
-        system_msg = """Extract important information from the user's message that should be remembered.
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "audio",
+                        "audio": load_audio_from_file(
+                            file_path=state["messages"][-1].content
+                        ),
+                    },
+                ],
+            },
+            {
+                "role": "system",
+                "content": [{"type": "text", "text": MEMORY_EXTRACTION_PROMPT}],
+            },
+        ]
 
-Look for any factual information, preferences, names, or details that would be useful to remember in future conversations.
+        inputs = self.processor.apply_chat_template(
+            messages,
+            add_generation_prompt=True,
+            tokenize=True,
+            return_dict=True,
+            return_tensors="pt",
+        ).to(self.model.device, dtype=self.model.dtype)
 
-Here are examples of what to extract:
+        with torch.inference_mode():
+            out = self.model.generate(
+                **inputs, max_new_tokens=256, disable_compile=True
+            )
 
-Input: "Hi! Remember: my name is Bob"
-Output: {"name": "Bob"}
-
-Input: "My favorite color is blue"
-Output: {"favorite_color": "blue"}
-
-Input: "I work at Google as a software engineer"
-Output: {"employer": "Google", "job": "software engineer"}
-
-Input: "The server IP is 192.168.1.100"
-Output: {"server_ip": "192.168.1.100"}
-
-Input: "What's the weather like?"
-Output: {}
-
-Input: "How are you?"
-Output: {}
-
-Now extract information from this message. Return only valid JSON with no extra text:"""
-
-        response = self.model.invoke(
-            [
-                {"role": "system", "content": system_msg},
-            ]
-            + state["messages"]
+        response = self.processor.decode(
+            out[0][inputs["input_ids"].shape[-1] :], skip_special_tokens=True
         )
         return {"messages": response}
 
@@ -123,3 +128,6 @@ Now extract information from this message. Return only valid JSON with no extra 
             graph.invoke(
                 {"messages": [{"role": "user", "content": user_message}]}, config
             )
+
+        file = Path(user_message)
+        file.unlink()
