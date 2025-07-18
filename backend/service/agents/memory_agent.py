@@ -1,10 +1,8 @@
-from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.store.redis import RedisStore
 from langgraph.store.base import BaseStore
 from langchain_core.runnables import RunnableConfig
 from langfuse.langchain import CallbackHandler
-import json
 import uuid
 import logging
 
