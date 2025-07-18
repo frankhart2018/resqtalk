@@ -6,3 +6,4 @@ ollama_data/
 node_modules/
 dist/
 .env
+langfuse_*/
