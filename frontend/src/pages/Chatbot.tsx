@@ -9,8 +9,8 @@ import React, {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./Chatbot.css";
-import ThemeToggle from "./ThemeToggle";
-import ModeToggle from "./ModeToggle";
+import ThemeToggle from "../components/ThemeToggle";
+import ModeToggle from "../components/ModeToggle";
 import { executeToolCall, getPromptWithTools } from "../tools/tool-utils";
 import {
   MediaRecorder as ExtendableMediaRecorder,
@@ -70,11 +70,13 @@ const Chatbot: React.FC = () => {
       });
   }, []);
 
-  const scrollToBottom = () => {
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [messages]);
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(() => {
+    console.log("Recording state updated:", isRecording);
+  }, [isRecording]);
 
   const appendMessage = (message: { text: string; sender: "bot" | "user" }) => {
     setMessages((prevMessages) => [...prevMessages, message]);
@@ -300,14 +302,6 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    console.log("Recording state updated:", isRecording);
-  }, [isRecording]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
@@ -376,7 +370,7 @@ const Chatbot: React.FC = () => {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="How can I help you in this disaster situation?"
-          disabled={isLoading}
+          disabled={isLoading || mode === "voice"}
         />
         {mode === "voice" && (
           <button
