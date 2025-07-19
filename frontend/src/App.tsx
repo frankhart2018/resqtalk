@@ -1,9 +1,11 @@
 import React from "react";
 import Chatbot from "./pages/Chatbot";
+import GodMode from "./pages/GodMode";
 import "./App.css";
 import { registerTool } from "./tools/tool-utils";
 import { playSound, stopSound } from "./tools/sound-tools";
 import { getLocation, LOCATION_RESULT } from "./tools/location-tools";
+import { Routes, Route } from "react-router-dom";
 
 registerTool(
   "playSound",
@@ -26,7 +28,10 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
-      <Chatbot />
+      <Routes>
+        <Route path="/" element={<Chatbot />} />
+        <Route path="/god" element={<GodMode />} />
+      </Routes>
     </div>
   );
 };

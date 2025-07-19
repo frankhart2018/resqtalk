@@ -132,6 +132,10 @@
   transform: scale(1.05);
 }
 
+.chatbot.dark .chatbot-header button {
+  color: white;
+}
+
 .chatbot-header {
   padding: 20px;
   font-size: 1.5em;
