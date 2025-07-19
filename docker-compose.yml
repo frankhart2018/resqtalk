@@ -11,6 +11,7 @@ services:
       MONGO_HOST: mongodb://mongo:27017/
     depends_on:
       - ollama
+      - mongo
 
   frontend:
     build: ./frontend
@@ -172,6 +173,11 @@ services:
       - 127.0.0.1:5432:5432
     volumes:
       - langfuse_postgres_data:/var/lib/postgresql/data
+
+  mongo:
+    image: mongo:bionic
+    ports:
+      - "27017:27017"
 
 volumes:
   langfuse_postgres_data:

@@ -22,6 +22,12 @@ from service.agents import (
     VoiceMemoryAgent,
 )
 from service.data_models.generate_text import PromptRequest
+from service.data_models.set_prompt import SetPromptRequest
+from service.utils.constants import (
+    COMM_AGENT_SYS_PROMPT_KEY,
+    MEMORY_AGENT_SYS_PROMPT_KEY,
+)
+from service.utils.prompt_store import SystemPromptStore
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -196,6 +202,28 @@ def get_mode():
 @app.get("/privileges")
 def get_privileges():
     return {"isGodMode": os.getenv("GOD_MODE") == "true"}
+
+
+@app.get("/prompt")
+def get_prompt(key: str):
+    if key == COMM_AGENT_SYS_PROMPT_KEY:
+        return {"prompt": SystemPromptStore().get_prompt(key=COMM_AGENT_SYS_PROMPT_KEY)}
+    elif key == MEMORY_AGENT_SYS_PROMPT_KEY:
+        return {
+            "prompt": SystemPromptStore().get_prompt(key=MEMORY_AGENT_SYS_PROMPT_KEY)
+        }
+    else:
+        raise HTTPException(status_code=400, detail=f"Invalid key: '{key}'")
+
+
+@app.put("/prompt")
+def set_prompt(request: SetPromptRequest):
+    if request.key not in [COMM_AGENT_SYS_PROMPT_KEY, MEMORY_AGENT_SYS_PROMPT_KEY]:
+        raise HTTPException(status_code=400, detail=f"Invalid key: '{request.key}'")
+
+    SystemPromptStore().store_prompt(key=request.key, prompt=request.prompt)
+
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

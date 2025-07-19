@@ -5,8 +5,9 @@ from langgraph.store.base import BaseStore
 from langfuse.langchain import CallbackHandler
 
 from service.utils.environment import REDIS_HOST
+from service.utils.constants import COMM_AGENT_SYS_PROMPT_KEY
+from service.utils.prompt_store import SystemPromptStore
 from service.agents.voice_agent_base import VoiceAgentBase
-from service.prompts import COMMUNICATION_AGENT_PROMPT
 
 
 class VoiceCommunicationAgent(VoiceAgentBase):
@@ -19,7 +20,10 @@ class VoiceCommunicationAgent(VoiceAgentBase):
 
         info = "\n".join([str(d.value) for d in memories])
 
-        system_msg = COMMUNICATION_AGENT_PROMPT.format(info=info)
+        memory_attachment = (
+            "Also here are the details about the user you are talking to:\n\n{info}"
+        ).format(info=info)
+        system_msg = f"{SystemPromptStore().get_prompt(key=COMM_AGENT_SYS_PROMPT_KEY)}\n{memory_attachment}"
         audio_path = state["messages"][-1].content
         messages = self.construct_model_messages(
             audio_path=audio_path, system_msg=system_msg

@@ -2,6 +2,7 @@ import { getPromptWithTools } from "../tools/tool-utils";
 import type {
   GetCurrentModeResponse,
   GetCurrentPrivilegesResponse,
+  GetSystempPromptResponse,
   VoiceModeResponse,
 } from "./model";
 import type { OptionalReadableBytesBuffer } from "./types";
@@ -99,5 +100,39 @@ export const switchMode = (newMode: string) => {
       "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
       "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
     },
+  });
+};
+
+export const getSystemPrompt = async (
+  key: string
+): Promise<GetSystempPromptResponse> => {
+  return fetch(`${API_HOST}/prompt?key=${key}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+      "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
+      "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
+    },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+  });
+};
+
+export const setSystemPrompt = async (key: string, prompt: string) => {
+  fetch(`${API_HOST}/prompt`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+      "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
+      "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
+    },
+    body: JSON.stringify({
+      key,
+      prompt,
+    }),
   });
 };

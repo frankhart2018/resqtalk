@@ -7,9 +7,10 @@ import uuid
 import logging
 
 from service.utils.environment import REDIS_HOST
+from service.utils.constants import MEMORY_AGENT_SYS_PROMPT_KEY
+from service.utils.prompt_store import SystemPromptStore
 from service.utils.parsing_utils import extract_memory_json
 from service.model import LangchainOllamaGemmaClient
-from service.prompts import MEMORY_EXTRACTION_PROMPT
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,12 @@ class MemoryAgent:
     ):
         response = self.model.invoke(
             [
-                {"role": "system", "content": MEMORY_EXTRACTION_PROMPT},
+                {
+                    "role": "system",
+                    "content": SystemPromptStore().get_prompt(
+                        key=MEMORY_AGENT_SYS_PROMPT_KEY
+                    ),
+                },
             ]
             + state["messages"]
         )

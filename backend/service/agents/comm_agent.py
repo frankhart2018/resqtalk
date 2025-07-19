@@ -6,8 +6,9 @@ from langfuse.langchain import CallbackHandler
 import sys
 
 from service.utils.environment import REDIS_HOST
+from service.utils.constants import COMM_AGENT_SYS_PROMPT_KEY
+from service.utils.prompt_store import SystemPromptStore
 from service.model import LangchainOllamaGemmaClient
-from service.prompts import COMMUNICATION_AGENT_PROMPT
 
 
 class CommunicationAgent:
@@ -24,7 +25,10 @@ class CommunicationAgent:
 
         info = "\n".join([str(d.value) for d in memories])
 
-        system_msg = COMMUNICATION_AGENT_PROMPT.format(info=info)
+        memory_attachment = (
+            "Also here are the details about the user you are talking to:\n\n{info}"
+        ).format(info=info)
+        system_msg = f"{SystemPromptStore().get_prompt(key=COMM_AGENT_SYS_PROMPT_KEY)}\n{memory_attachment}"
         response = await self.model.ainvoke(
             [{"role": "system", "content": system_msg}] + state["messages"], config
         )
