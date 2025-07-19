@@ -24,7 +24,9 @@ import {
 } from "../utils/recording-utils";
 import { textResponseIteratorCleaner } from "../utils/stream-iterator";
 import RobotIcon from "../components/RobotIcon";
+import SpeakerIcon from "../components/SpeakerIcon";
 import { useNavigate } from "react-router-dom";
+import { playSpeech } from "../utils/tts-utils";
 
 let encoderRegistered = false;
 
@@ -237,15 +239,37 @@ const Chatbot: React.FC = () => {
         {messages.map((message, index) => (
           <div key={index} className={`message-container ${message.sender}`}>
             {message.sender === "bot" && <div className="avatar bot">B</div>}
-            <div className={`chatbot-message ${message.sender}`}>
-              {typeof message.text === "string" ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {message.text}
-                </ReactMarkdown>
-              ) : (
-                message.text
-              )}
-            </div>
+            {message.sender === "bot" ? (
+              <div className="bot-message-content">
+                <div className={`chatbot-message ${message.sender}`}>
+                  {typeof message.text === "string" ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.text}
+                    </ReactMarkdown>
+                  ) : (
+                    message.text
+                  )}
+                </div>
+                {typeof message.text === "string" && (
+                  <button
+                    className="speaker-button"
+                    onClick={() => playSpeech(message.text as string)}
+                  >
+                    <SpeakerIcon />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className={`chatbot-message ${message.sender}`}>
+                {typeof message.text === "string" ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.text}
+                  </ReactMarkdown>
+                ) : (
+                  message.text
+                )}
+              </div>
+            )}
             {message.sender === "user" && <div className="avatar user">U</div>}
           </div>
         ))}

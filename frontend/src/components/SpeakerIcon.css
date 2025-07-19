@@ -1,0 +1,24 @@
+.speaker-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit; /* Inherit color from parent for dark/light theme */
+}
+
+.speaker-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.chatbot.light .speaker-button {
+  color: #333333; /* Darker color for light theme */
+}
+
+.chatbot.dark .speaker-button {
+  color: #ffffff; /* Lighter color for dark theme */
+}

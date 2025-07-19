@@ -178,6 +178,12 @@
   justify-content: flex-start;
 }
 
+.bot-message-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .avatar {
   width: 40px;
   height: 40px;
@@ -310,6 +316,10 @@
 .chatbot-button.recording {
   background: #dc3545 !important; /* Red color while recording */
   animation: pulse 2s infinite;
+}
+
+.speaker-button {
+  margin-left: 5px;
 }
 
 .chatbot.dark .chatbot-button.recording {
