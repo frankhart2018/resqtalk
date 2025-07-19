@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { getCurrentPrivileges, getSystemPrompt, setSystemPrompt } from "../api/api";
 import type { GetCurrentPrivilegesResponse, GetSystempPromptResponse } from "../api/model";
 import "./Chatbot.css";
+import "./GodMode.css";
 
 const GodMode: React.FC = () => {
   const [theme, setTheme] = useState("dark");

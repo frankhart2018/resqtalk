@@ -8,9 +8,10 @@ import logging
 from pathlib import Path
 
 from service.utils.environment import REDIS_HOST
+from service.utils.constants import MEMORY_AGENT_SYS_PROMPT_KEY
+from service.utils.prompt_store import SystemPromptStore
 from service.utils.parsing_utils import extract_memory_json
 from service.agents.voice_agent_base import VoiceAgentBase
-from service.prompts import MEMORY_EXTRACTION_PROMPT
 
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ class VoiceMemoryAgent(VoiceAgentBase):
     ):
         audio_path = state["messages"][-1].content
         messages = self.construct_model_messages(
-            audio_path=audio_path, system_msg=MEMORY_EXTRACTION_PROMPT
+            audio_path=audio_path,
+            system_msg=SystemPromptStore().get_prompt(key=MEMORY_AGENT_SYS_PROMPT_KEY),
         )
 
         return {"messages": self.model.invoke(messages)}
