@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import React, { useState, useRef, useEffect, type JSX } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./Chatbot.css";
@@ -38,7 +32,7 @@ const registerWavEncoder = async () => {
 
 const Chatbot: React.FC = () => {
   const [messages, setMessages] = useState<
-    { text: string; sender: "user" | "bot" }[]
+    { text: string | JSX.Element; sender: "user" | "bot" }[]
   >([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -71,7 +65,10 @@ const Chatbot: React.FC = () => {
   /////////////////////////////////////////////////////////////////
   // MESSAGE HELPERS
   /////////////////////////////////////////////////////////////////
-  const appendMessage = (message: { text: string; sender: "bot" | "user" }) => {
+  const appendMessage = (message: {
+    text: string | JSX.Element;
+    sender: "bot" | "user";
+  }) => {
     setMessages((prevMessages) => [...prevMessages, message]);
   };
 
@@ -89,6 +86,13 @@ const Chatbot: React.FC = () => {
     });
   };
 
+  const appendBotMessage = (text: string) => {
+    appendMessage({
+      text,
+      sender: "bot",
+    });
+  };
+
   /////////////////////////////////////////////////////////////////
   // MODEL CALLING HELPERS
   /////////////////////////////////////////////////////////////////
@@ -100,15 +104,19 @@ const Chatbot: React.FC = () => {
       try {
         const audioBlob = await stopRecordingAudio();
         if (!audioBlob) throw new Error("Recording failed to produce a blob.");
+        appendMessage({
+          text: <audio controls src={URL.createObjectURL(audioBlob)}></audio>,
+          sender: "user",
+        });
 
         const transcription = (await getVoiceModeResponse(audioBlob)).response;
 
         if (transcription && transcription.trim()) {
-          appendMessage({ text: transcription, sender: "bot" });
+          appendBotMessage(transcription);
         }
       } catch (error) {
         console.error("Error processing audio:", error);
-        replaceLastBotMessage("Error: Could not process audio recording.");
+        appendBotMessage("Error: Could not process audio recording.");
       } finally {
         setIsLoading(false);
       }
@@ -118,13 +126,7 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  const streamPromptResponse = async (
-    prompt: string,
-    setMessages: Dispatch<
-      SetStateAction<{ text: string; sender: "user" | "bot" }[]>
-    >,
-    setIsLoading: Dispatch<SetStateAction<boolean>>
-  ): Promise<string> => {
+  const streamPromptResponse = async (prompt: string): Promise<string> => {
     let replyData = "";
     try {
       const reader = await getTextModeResponse(prompt);
@@ -136,15 +138,9 @@ const Chatbot: React.FC = () => {
         replyData += data.text;
         if (data.isFirstChunk) {
           setIsLoading(false);
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            { sender: "bot", text: replyData },
-          ]);
+          appendBotMessage(replyData);
         } else {
-          setMessages((prevMessages) => [
-            ...prevMessages.slice(0, prevMessages.length - 1),
-            { sender: "bot", text: replyData },
-          ]);
+          replaceLastBotMessage(replyData);
         }
       }
     } catch (error: unknown) {
@@ -172,11 +168,7 @@ const Chatbot: React.FC = () => {
       setInputValue("");
       setIsLoading(true);
       try {
-        const replyData = await streamPromptResponse(
-          inputValue,
-          setMessages,
-          setIsLoading
-        );
+        const replyData = await streamPromptResponse(inputValue);
         try {
           const [toolCallResult, toolName] = processToolCallMessages(replyData);
           if (toolCallResult !== null) {
@@ -229,7 +221,7 @@ const Chatbot: React.FC = () => {
           <div key={index} className={`message-container ${message.sender}`}>
             {message.sender === "bot" && <div className="avatar bot">B</div>}
             <div className={`chatbot-message ${message.sender}`}>
-              {message.sender === "bot" ? (
+              {typeof message.text === "string" ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.text}
                 </ReactMarkdown>
