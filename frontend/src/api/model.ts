@@ -13,3 +13,7 @@ export interface VoiceModeResponse {
 export interface GetSystempPromptResponse {
   prompt: string;
 }
+
+export interface GetMemoriesResponse {
+  memories: Array<Array<Record<string, unknown>>>;
+}

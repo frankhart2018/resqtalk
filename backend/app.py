@@ -28,6 +28,7 @@ from service.utils.constants import (
     MEMORY_AGENT_SYS_PROMPT_KEY,
 )
 from service.utils.prompt_store import SystemPromptStore
+from service.utils.memory_store import MemoryStore
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -224,6 +225,11 @@ def set_prompt(request: SetPromptRequest):
     SystemPromptStore().store_prompt(key=request.key, prompt=request.prompt)
 
     return {"status": "ok"}
+
+
+@app.get("/memories")
+def get_memories():
+    return {"memories": MemoryStore().list_memory()}
 
 
 if __name__ == "__main__":

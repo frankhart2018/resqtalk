@@ -2,6 +2,7 @@ import { getPromptWithTools } from "../tools/tool-utils";
 import type {
   GetCurrentModeResponse,
   GetCurrentPrivilegesResponse,
+  GetMemoriesResponse,
   GetSystempPromptResponse,
   VoiceModeResponse,
 } from "./model";
@@ -134,5 +135,21 @@ export const setSystemPrompt = async (key: string, prompt: string) => {
       key,
       prompt,
     }),
+  });
+};
+
+export const getMemories = async (): Promise<GetMemoriesResponse> => {
+  return fetch(`${API_HOST}/memories`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+      "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
+      "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
+    },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
   });
 };
