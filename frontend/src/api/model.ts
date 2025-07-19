@@ -9,3 +9,7 @@ export interface GetCurrentPrivilegesResponse {
 export interface VoiceModeResponse {
   response: string;
 }
+
+export interface GetSystempPromptResponse {
+  prompt: string;
+}
