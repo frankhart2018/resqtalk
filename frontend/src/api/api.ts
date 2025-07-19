@@ -1,5 +1,9 @@
 import { getPromptWithTools } from "../tools/tool-utils";
-import type { GetCurrentModeResponse, VoiceModeResponse } from "./model";
+import type {
+  GetCurrentModeResponse,
+  GetCurrentPrivilegesResponse,
+  VoiceModeResponse,
+} from "./model";
 import type { OptionalReadableBytesBuffer } from "./types";
 
 const API_HOST =
@@ -26,6 +30,22 @@ export const getCurrentMode = async (): Promise<GetCurrentModeResponse> => {
     }
   });
 };
+
+export const getCurrentPrivileges =
+  async (): Promise<GetCurrentPrivilegesResponse> => {
+    return fetch(`${API_HOST}/privileges`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...getCfAuthHeaders(),
+      },
+    }).then((response) => {
+      if (response.ok) {
+        return response.json();
+      }
+    });
+  };
 
 export const getVoiceModeResponse = async (
   audioBlob: Blob

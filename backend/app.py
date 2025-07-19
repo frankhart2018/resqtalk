@@ -10,6 +10,7 @@ import gc
 import uuid
 from pathlib import Path
 from dotenv import load_dotenv
+import os
 
 
 load_dotenv()
@@ -190,6 +191,11 @@ async def switch_mode(mode: Mode):
 @app.get("/mode")
 def get_mode():
     return {"mode": current_mode.value}
+
+
+@app.get("/privileges")
+def get_privileges():
+    return {"isGodMode": os.getenv("GOD_MODE") == "true"}
 
 
 if __name__ == "__main__":
