@@ -7,6 +7,7 @@ import {
   getSystemPrompt,
   setSystemPrompt,
   getMemories,
+  deleteUser,
 } from "../api/api";
 import type {
   GetCurrentPrivilegesResponse,
@@ -19,6 +20,7 @@ import "./GodMode.css";
 const GodMode: React.FC = () => {
   const [theme, setTheme] = useState("dark");
   const [isGodMode, setIsGodMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [communicationAgentPrompt, setCommunicationAgentPrompt] = useState("");
   const [memoryAgentPrompt, setMemoryAgentPrompt] = useState("");
   const [memories, setMemories] = useState<
@@ -27,12 +29,16 @@ const GodMode: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    getCurrentPrivileges().then((data: GetCurrentPrivilegesResponse) => {
-      setIsGodMode(data.isGodMode);
-      if (!data.isGodMode) {
-        navigate("/");
-      }
-    });
+    getCurrentPrivileges()
+      .then((data: GetCurrentPrivilegesResponse) => {
+        setIsGodMode(data.isGodMode);
+        if (!data.isGodMode) {
+          navigate("/");
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
 
     getSystemPrompt("communication-agent-sys-prompt").then(
       (data: GetSystempPromptResponse) => {
@@ -60,7 +66,24 @@ const GodMode: React.FC = () => {
     window.location.reload();
   };
 
-  return isGodMode ? (
+  const handleDeleteUser = async () => {
+    try {
+      await deleteUser();
+      alert("User data deleted successfully!");
+      navigate("/"); // Redirect to onboarding page
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("An error occurred while deleting user data.");
+    }
+  };
+
+  return isLoading ? (
+    <div className={`chatbot ${theme}`}>
+      <div className="chatbot-header">
+        <div className="chatbot-header-title">Loading...</div>
+      </div>
+    </div>
+  ) : isGodMode ? (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
         <span onClick={() => navigate("/")}>
@@ -117,6 +140,12 @@ const GodMode: React.FC = () => {
             {JSON.stringify(memories, null, 4)}
           </pre>
         </div>
+        <button
+          className="delete-user-button"
+          onClick={handleDeleteUser}
+        >
+          Delete Current User
+        </button>
       </div>
     </div>
   ) : null;

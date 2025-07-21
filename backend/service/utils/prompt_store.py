@@ -2,9 +2,9 @@ import pymongo
 
 from service.utils.singleton import singleton
 from service.utils.environment import MONGO_HOST
+from service.utils.constants import MONGO_DB_NAME
 
 
-MONGO_DB_NAME = "resqtalk"
 MONGO_COLLECTION_NAME = "system-prompts"
 
 

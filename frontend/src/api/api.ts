@@ -4,6 +4,7 @@ import type {
   GetCurrentPrivilegesResponse,
   GetMemoriesResponse,
   GetSystempPromptResponse,
+  OnboardingData,
   VoiceModeResponse,
 } from "./model";
 import type { OptionalReadableBytesBuffer } from "./types";
@@ -16,6 +17,24 @@ const getCfAuthHeaders = (): object => {
     "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
     "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
   };
+};
+
+export const submitOnboarding = async (data: OnboardingData) => {
+  const response = await fetch(`${API_HOST}/onboarding`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getCfAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(`Onboarding failed: ${result.status}`);
+  }
+
+  return response.json();
 };
 
 export const getCurrentMode = async (): Promise<GetCurrentModeResponse> => {
@@ -152,4 +171,21 @@ export const getMemories = async (): Promise<GetMemoriesResponse> => {
       return response.json();
     }
   });
+};
+
+export const deleteUser = async () => {
+  const response = await fetch(`${API_HOST}/user`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      ...getCfAuthHeaders(),
+    },
+  });
+
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(`User deletion failed: ${result.status}`);
+  }
+
+  return response.json();
 };

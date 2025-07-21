@@ -74,3 +74,19 @@
 .memory-item:last-child {
   border-bottom: none;
 }
+
+.delete-user-button {
+  background-color: #dc3545;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  font-weight: 500;
+  margin-left: 10px;
+  transition: background-color 0.2s;
+}
+
+.delete-user-button:hover {
+  background-color: #c82333;
+}
