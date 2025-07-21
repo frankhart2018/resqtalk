@@ -262,6 +262,26 @@ def delete_user():
     return {"status": "ok"}
 
 
+@app.get("/disasters")
+def get_disasters():
+    user_info_store = UserInfoStore()
+    user_info = user_info_store.get_user_document()
+    if not user_info:
+        raise HTTPException(status_code=404, detail="User not onboarded yet.")
+    return {"disasters": user_info["selectedDisasters"]}
+
+
+@app.get("/user/details")
+def get_user_details():
+    _check_god_mode()
+    user_info_store = UserInfoStore()
+    user_info = user_info_store.get_user_document()
+    if not user_info:
+        raise HTTPException(status_code=404, detail="User not onboarded yet.")
+    user_info["_id"] = str(user_info["_id"])  
+    return user_info
+
+
 if __name__ == "__main__":
     import uvicorn
 

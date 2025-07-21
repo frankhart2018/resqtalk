@@ -4,6 +4,7 @@ import type {
   GetCurrentPrivilegesResponse,
   GetMemoriesResponse,
   GetSystempPromptResponse,
+  GetUserDetailsResponse,
   OnboardingData,
   VoiceModeResponse,
 } from "./model";
@@ -184,4 +185,20 @@ export const deleteUser = async () => {
   }
 
   return response.json();
+};
+
+export const getUserDetails = async (): Promise<GetUserDetailsResponse> => {
+  return fetch(`${API_HOST}/user/details`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...getCfAuthHeaders(),
+    },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  });
 };

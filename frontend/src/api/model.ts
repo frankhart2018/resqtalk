@@ -42,3 +42,5 @@ export interface OnboardingData {
   location: OnboardingLocation;
   selectedDisasters: string[];
 }
+
+export interface GetUserDetailsResponse extends OnboardingData {}
