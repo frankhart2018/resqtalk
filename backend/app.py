@@ -84,8 +84,9 @@ async def lifespan(app: FastAPI):
 
     memory_task = asyncio.create_task(memory_processor())
 
+    is_god_mode = os.getenv("GOD_MODE") == "true"
     logger.info(
-        f"API Server ready for requests, current processing mode: '{current_mode.name}'"
+        f"API Server ready for requests, current processing mode: '{current_mode.name}', God Mode: {is_god_mode}"
     )
 
     yield
@@ -207,8 +208,16 @@ def get_privileges():
     return {"isGodMode": os.getenv("GOD_MODE") == "true"}
 
 
+def _check_god_mode():
+    if os.getenv("GOD_MODE") != "true":
+        raise HTTPException(
+            status_code=400, detail="This operation is only allowed in God Mode."
+        )
+
+
 @app.get("/prompt")
 def get_prompt(key: str):
+    _check_god_mode()
     if key == COMM_AGENT_SYS_PROMPT_KEY:
         return {"prompt": SystemPromptStore().get_prompt(key=COMM_AGENT_SYS_PROMPT_KEY)}
     elif key == MEMORY_AGENT_SYS_PROMPT_KEY:
@@ -221,6 +230,7 @@ def get_prompt(key: str):
 
 @app.put("/prompt")
 def set_prompt(request: SetPromptRequest):
+    _check_god_mode()
     if request.key not in [COMM_AGENT_SYS_PROMPT_KEY, MEMORY_AGENT_SYS_PROMPT_KEY]:
         raise HTTPException(status_code=400, detail=f"Invalid key: '{request.key}'")
 
@@ -231,6 +241,7 @@ def set_prompt(request: SetPromptRequest):
 
 @app.get("/memories")
 def get_memories():
+    _check_god_mode()
     return {"memories": MemoryStore().list_memory()}
 
 
@@ -246,6 +257,7 @@ def onboard_device(onboarding_request: OnboardingRequest):
 
 @app.delete("/user")
 def delete_user():
+    _check_god_mode()
     UserInfoStore().delete_user()
     return {"status": "ok"}
 

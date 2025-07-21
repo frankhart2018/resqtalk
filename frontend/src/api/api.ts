@@ -117,8 +117,7 @@ export const switchMode = (newMode: string) => {
     headers: {
       "Content-Type": "application/json",
       Accept: "text/event-stream",
-      "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-      "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
+      ...getCfAuthHeaders(),
     },
   });
 };
@@ -131,8 +130,7 @@ export const getSystemPrompt = async (
     headers: {
       "Content-Type": "application/json",
       Accept: "text/event-stream",
-      "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-      "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
+      ...getCfAuthHeaders(),
     },
   }).then((response) => {
     if (response.ok) {
@@ -147,8 +145,7 @@ export const setSystemPrompt = async (key: string, prompt: string) => {
     headers: {
       "Content-Type": "application/json",
       Accept: "text/event-stream",
-      "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-      "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
+      ...getCfAuthHeaders(),
     },
     body: JSON.stringify({
       key,
@@ -163,8 +160,7 @@ export const getMemories = async (): Promise<GetMemoriesResponse> => {
     headers: {
       "Content-Type": "application/json",
       Accept: "text/event-stream",
-      "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
-      "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
+      ...getCfAuthHeaders(),
     },
   }).then((response) => {
     if (response.ok) {
