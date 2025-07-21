@@ -23,11 +23,13 @@ from service.agents import (
 )
 from service.data_models.generate_text import PromptRequest
 from service.data_models.set_prompt import SetPromptRequest
+from service.data_models.onboarding import OnboardingRequest, OnboardingResponse
 from service.utils.constants import (
     COMM_AGENT_SYS_PROMPT_KEY,
     MEMORY_AGENT_SYS_PROMPT_KEY,
 )
 from service.utils.prompt_store import SystemPromptStore
+from service.utils.user_info_store import UserInfoStore
 from service.utils.memory_store import MemoryStore
 
 
@@ -230,6 +232,22 @@ def set_prompt(request: SetPromptRequest):
 @app.get("/memories")
 def get_memories():
     return {"memories": MemoryStore().list_memory()}
+
+
+@app.post("/onboarding")
+def onboard_device(onboarding_request: OnboardingRequest):
+    user_info_store = UserInfoStore()
+    if user_info_store.find_singular_user():
+        return {"status": OnboardingResponse.ALREADY_REGISTERED}
+
+    user_info_store.onboard_user(onboarding_request)
+    return {"status": OnboardingResponse.OK}
+
+
+@app.delete("/user")
+def delete_user():
+    UserInfoStore().delete_user()
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

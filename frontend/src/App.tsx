@@ -1,6 +1,7 @@
 import React from "react";
 import Chatbot from "./pages/Chatbot";
 import GodMode from "./pages/GodMode";
+import Onboarding from "./pages/Onboarding";
 import "./App.css";
 import { registerTool } from "./tools/tool-utils";
 import { playSound, stopSound } from "./tools/sound-tools";
@@ -31,6 +32,7 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<Chatbot />} />
         <Route path="/god" element={<GodMode />} />
+        <Route path="/onboard" element={<Onboarding />} />
       </Routes>
     </div>
   );
