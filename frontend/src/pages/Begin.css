@@ -1,0 +1,73 @@
+.begin-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.begin-heading {
+  text-align: center;
+  margin-bottom: 40px; /* Add some space below the heading */
+}
+
+.disaster-phase-selector {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.disaster-phase-selector label {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.disaster-phase-selector select {
+  padding: 10px 15px;
+  font-size: 1em;
+  border-radius: 8px;
+  border: 1px solid var(--button-border-color);
+  background-color: var(--button-background);
+  color: var(--button-text);
+  cursor: pointer;
+}
+
+.disaster-phase-selector select option {
+  background-color: var(--select-option-background);
+  color: var(--select-option-text);
+}
+
+.disaster-phase-selector select:focus {
+  outline: none;
+  border-color: var(--button-hover-background);
+}
+
+.disaster-buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.disaster-button {
+  padding: 20px 40px;
+  font-size: 1.5em;
+  font-weight: bold;
+  border: 2px solid var(--button-border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: var(--button-background);
+  color: var(--button-text);
+  transition: background-color 0.3s ease;
+}
+
+.disaster-button:hover {
+  background-color: var(--button-hover-background);
+}
+
+.disaster-button.selected {
+  background-color: var(--button-border-color);
+  color: white; /* Ensure text color is readable on the filled button */
+}

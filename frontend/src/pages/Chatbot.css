@@ -12,6 +12,12 @@
 .chatbot.light {
   background-color: #ffffff;
   color: #333333;
+  --button-background: #007bff;
+  --button-text: white;
+  --button-hover-background: #0056b3;
+  --button-border-color: #0056b3;
+  --select-option-background: #ffffff;
+  --select-option-text: #333333;
 }
 
 .chatbot.light .chatbot-header {
@@ -71,6 +77,12 @@
 .chatbot.dark {
   background-color: #2c2f33;
   color: #ffffff;
+  --button-background: linear-gradient(45deg, #7289da, #99aab5);
+  --button-text: white;
+  --button-hover-background: linear-gradient(45deg, #5b6eaf, #7f8ea5);
+  --button-border-color: #7289da;
+  --select-option-background: #2c2f33;
+  --select-option-text: #ffffff;
 }
 
 .chatbot.dark .chatbot-header {

@@ -19,6 +19,9 @@ class UserInfoStore:
     def find_singular_user(self):
         return self.__collection.count_documents({}) > 0
 
+    def get_user_document(self):
+        return self.__collection.find_one({})
+
     def onboard_user(self, onboarding_request: OnboardingRequest):
         self.__collection.insert_one(onboarding_request.model_dump(mode="json"))
 
