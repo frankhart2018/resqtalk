@@ -1,0 +1,15 @@
+.sos-tools-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  flex-grow: 1;
+  padding: 2rem;
+  text-align: center;
+}
+
+.sos-tools-title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
