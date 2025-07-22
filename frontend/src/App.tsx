@@ -4,6 +4,7 @@ import GodMode from "./pages/GodMode";
 import Onboarding from "./pages/Onboarding";
 import Begin from "./pages/Begin";
 import Dashboard from "./pages/Dashboard";
+import StoredInfo from "./pages/StoredInfo";
 import NotFound from "./pages/NotFound";
 import "./App.css";
 import { registerTool } from "./tools/tool-utils";
@@ -38,6 +39,7 @@ const App: React.FC = () => {
         <Route path="/onboard" element={<Onboarding />} />
         <Route path="/begin" element={<Begin />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/info" element={<StoredInfo />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

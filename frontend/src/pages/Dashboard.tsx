@@ -31,7 +31,7 @@ const Dashboard: React.FC = () => {
           <Link to="/checklist" className="dashboard-card">
             <h2>Checklist</h2>
           </Link>
-          <Link to="/stored-info" className="dashboard-card">
+          <Link to="/info" className="dashboard-card">
             <h2>Stored Info</h2>
           </Link>
           <Link to="/live-alerts" className="dashboard-card">

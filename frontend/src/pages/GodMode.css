@@ -7,6 +7,12 @@
   overflow-y: auto;
 }
 
+.god-mode-title {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
 .prompt-box {
   display: flex;
   flex-direction: column;
