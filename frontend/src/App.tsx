@@ -4,6 +4,7 @@ import GodMode from "./pages/GodMode";
 import Onboarding from "./pages/Onboarding";
 import Begin from "./pages/Begin";
 import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/NotFound";
 import "./App.css";
 import { registerTool } from "./tools/tool-utils";
 import { playSound, stopSound } from "./tools/sound-tools";
@@ -37,6 +38,7 @@ const App: React.FC = () => {
         <Route path="/onboard" element={<Onboarding />} />
         <Route path="/begin" element={<Begin />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );

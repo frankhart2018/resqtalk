@@ -25,7 +25,7 @@ const Dashboard: React.FC = () => {
           <Link to="/maps" className="dashboard-card">
             <h2>Maps</h2>
           </Link>
-          <Link to="/chat" className="dashboard-card">
+          <Link to="/" className="dashboard-card">
             <h2>Chat</h2>
           </Link>
           <Link to="/checklist" className="dashboard-card">
