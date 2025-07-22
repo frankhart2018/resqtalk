@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDisasters } from "../api/api";
-import type { GetDisastersResponse } from "../api/model";
+import { getDisasters, getCurrentPrivileges } from "../api/api";
+import type { GetDisastersResponse, GetCurrentPrivilegesResponse } from "../api/model";
 import ThemeToggle from "../components/ThemeToggle";
+import RobotIcon from "../components/RobotIcon";
 import "./Chatbot.css"; // For theme
 import "./Begin.css";
 
 const Begin: React.FC = () => {
+  const [isGodMode, setIsGodMode] = useState(false);
   const [theme, setTheme] = useState("dark");
   const [disasters, setDisasters] = useState<string[]>([]);
   const [selectedDisaster, setSelectedDisaster] = useState<string | null>(null);
@@ -15,6 +17,10 @@ const Begin: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    getCurrentPrivileges().then((data: GetCurrentPrivilegesResponse) => {
+      setIsGodMode(data.isGodMode);
+    });
+
     getDisasters()
       .then((data: GetDisastersResponse) => {
         setDisasters(data.disasters);
@@ -37,6 +43,11 @@ const Begin: React.FC = () => {
   return (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
+        {isGodMode && (
+          <span onClick={() => navigate("/god")}>
+            <RobotIcon />
+          </span>
+        )}
         <div className="chatbot-header-title">ResQTalk</div>
         <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       </div>

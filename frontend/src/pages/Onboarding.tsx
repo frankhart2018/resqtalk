@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import "./Onboarding.css";
-import { submitOnboarding } from "../api/api";
-import type { OnboardingData } from "../api/model";
+import { getCurrentPrivileges, submitOnboarding } from "../api/api";
+import type { GetCurrentPrivilegesResponse, OnboardingData } from "../api/model";
 import ThemeToggle from "../components/ThemeToggle";
 import LocationMap from "../components/LocationMap";
 import { useNavigate } from "react-router-dom";
+import RobotIcon from "../components/RobotIcon";
 
 interface PrimaryUserDetails {
   name: string;
@@ -24,6 +25,7 @@ interface Location {
 }
 
 const Onboarding = () => {
+  const [isGodMode, setIsGodMode] = useState(false);
   const [primaryUserDetails, setPrimaryUserDetails] =
     useState<PrimaryUserDetails>({
       name: "",
@@ -79,6 +81,10 @@ const Onboarding = () => {
   };
 
   useEffect(() => {
+    getCurrentPrivileges().then((data: GetCurrentPrivilegesResponse) => {
+      setIsGodMode(data.isGodMode);
+    });
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -154,6 +160,11 @@ const Onboarding = () => {
   return (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
+        {isGodMode && (
+          <span onClick={() => navigate("/god")}>
+            <RobotIcon />
+          </span>
+        )}
         <div className="chatbot-header-title">Onboarding</div>
         <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       </div>
