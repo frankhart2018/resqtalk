@@ -34,16 +34,7 @@ const Onboarding = () => {
     });
   const [dependentUserDetails, setDependentUserDetails] = useState<
     DependentUserDetails[]
-  >([
-    {
-      name: "",
-      age: "",
-      gender: "male",
-      relationship: "",
-      allergies: "",
-      medications: "",
-    },
-  ]);
+  >([]);
   const [location, setLocation] = useState<Location>({
     latitude: "",
     longitude: "",
@@ -147,9 +138,13 @@ const Onboarding = () => {
     };
 
     try {
-      await submitOnboarding(data);
-      alert("Onboarding successful!");
-      navigate("/");
+      const result = await submitOnboarding(data);
+      if (result.status === "already_registered") {
+        alert("User already onboarded!");
+      } else {
+        alert("Onboarding successful!");
+        navigate("/");
+      }
     } catch (error) {
       console.error("Error during onboarding:", error);
       alert("An error occurred during onboarding.");
