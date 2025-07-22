@@ -5,6 +5,7 @@ import type { OnboardingData } from "../api/model";
 import ThemeToggle from "../components/ThemeToggle";
 import LocationMap from "../components/LocationMap";
 import { useNavigate } from "react-router-dom";
+import GodModeNav from "../components/GodModeNav";
 
 interface PrimaryUserDetails {
   name: string;
@@ -154,6 +155,7 @@ const Onboarding = () => {
   return (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
+        <GodModeNav />
         <div className="chatbot-header-title">Onboarding</div>
         <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       </div>

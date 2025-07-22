@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getDisasters } from "../api/api";
 import type { GetDisastersResponse } from "../api/model";
 import ThemeToggle from "../components/ThemeToggle";
+import GodModeNav from "../components/GodModeNav";
 import "./Chatbot.css"; // For theme
 import "./Begin.css";
 
@@ -37,6 +38,7 @@ const Begin: React.FC = () => {
   return (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
+        <GodModeNav />
         <div className="chatbot-header-title">ResQTalk</div>
         <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       </div>
@@ -58,16 +60,16 @@ const Begin: React.FC = () => {
               </select>
             </div>
             <div className="disaster-buttons-container">
-            {disasters.map((disaster) => (
-              <button
-                key={disaster}
-                className={`disaster-button ${selectedDisaster === disaster ? "selected" : ""}`}
-                onClick={() => setSelectedDisaster(disaster)}
-              >
-                {disaster.toUpperCase()}
-              </button>
-            ))}
-          </div>
+              {disasters.map((disaster) => (
+                <button
+                  key={disaster}
+                  className={`disaster-button ${selectedDisaster === disaster ? "selected" : ""}`}
+                  onClick={() => setSelectedDisaster(disaster)}
+                >
+                  {disaster.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </>
         )}
       </div>

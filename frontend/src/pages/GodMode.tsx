@@ -102,10 +102,11 @@ const GodMode: React.FC = () => {
         <span onClick={() => navigate("/")}>
           <BackIcon />
         </span>
-        <div className="chatbot-header-title">ResQTalk - (भगवान)</div>
+        <div className="chatbot-header-title">ResQTalk</div>
         <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       </div>
       <div className="god-mode-content">
+        <h1 className="god-mode-title">भगवान</h1>
         <div className="prompt-box">
           <label htmlFor="communication-agent-prompt">
             Communication Agent System Prompt
