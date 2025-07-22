@@ -44,3 +44,7 @@ export interface OnboardingData {
 }
 
 export interface GetUserDetailsResponse extends OnboardingData {}
+
+export interface GetDisastersResponse {
+  disasters: string[];
+}

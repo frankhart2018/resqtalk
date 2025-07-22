@@ -2,6 +2,7 @@ import { getPromptWithTools } from "../tools/tool-utils";
 import type {
   GetCurrentModeResponse,
   GetCurrentPrivilegesResponse,
+  GetDisastersResponse,
   GetMemoriesResponse,
   GetSystempPromptResponse,
   GetUserDetailsResponse,
@@ -189,6 +190,22 @@ export const deleteUser = async () => {
 
 export const getUserDetails = async (): Promise<GetUserDetailsResponse> => {
   return fetch(`${API_HOST}/user/details`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...getCfAuthHeaders(),
+    },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  });
+};
+
+export const getDisasters = async (): Promise<GetDisastersResponse> => {
+  return fetch(`${API_HOST}/disasters`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
