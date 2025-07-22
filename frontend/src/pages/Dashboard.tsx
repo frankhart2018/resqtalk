@@ -1,21 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import './Dashboard.css';
 import ThemeToggle from '../components/ThemeToggle';
-import RobotIcon from '../components/RobotIcon';
-import { getCurrentPrivileges } from '../api/api';
-import type { GetCurrentPrivilegesResponse } from '../api/model';
+import GodModeNav from '../components/GodModeNav';
 
 const Dashboard: React.FC = () => {
   const [theme, setTheme] = useState('dark');
-  const [isGodMode, setIsGodMode] = useState(false);
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    getCurrentPrivileges().then((data: GetCurrentPrivilegesResponse) => {
-      setIsGodMode(data.isGodMode);
-    });
-  }, []);
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
@@ -24,11 +15,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
-        {isGodMode && (
-          <span onClick={() => navigate('/god')}>
-            <RobotIcon />
-          </span>
-        )}
+        <GodModeNav />
         <div className="chatbot-header-title">ResQTalk</div>
         <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       </div>

@@ -9,23 +9,20 @@ import { register } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
 import {
   getCurrentMode,
-  getCurrentPrivileges,
   getTextModeResponse,
   getVoiceModeResponse,
   switchMode,
 } from "../api/api";
 import type {
   GetCurrentModeResponse,
-  GetCurrentPrivilegesResponse,
 } from "../api/model";
 import {
   startRecordingAudio,
   stopRecordingAudio,
 } from "../utils/recording-utils";
 import { textResponseIteratorCleaner } from "../utils/stream-iterator";
-import RobotIcon from "../components/RobotIcon";
+import GodModeNav from "../components/GodModeNav";
 import SpeakerIcon from "../components/SpeakerIcon";
-import { useNavigate } from "react-router-dom";
 import { playSpeech } from "../utils/tts-utils";
 
 let encoderRegistered = false;
@@ -47,9 +44,7 @@ const Chatbot: React.FC = () => {
   const [theme, setTheme] = useState("dark");
   const [isRecording, setIsRecording] = useState(false);
   const [mode, setMode] = useState("text");
-  const [isGodMode, setIsGodMode] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
-  const navigate = useNavigate();
 
   /////////////////////////////////////////////////////////////////
   // STATE CHANGE PROCESSORS
@@ -61,10 +56,6 @@ const Chatbot: React.FC = () => {
 
     getCurrentMode().then((data: GetCurrentModeResponse) => {
       setMode(data.mode);
-    });
-
-    getCurrentPrivileges().then((data: GetCurrentPrivilegesResponse) => {
-      setIsGodMode(data.isGodMode);
     });
   }, []);
 
@@ -226,11 +217,7 @@ const Chatbot: React.FC = () => {
   return (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
-        {isGodMode && (
-          <span onClick={() => navigate("/god")}>
-            <RobotIcon />
-          </span>
-        )}
+        <GodModeNav />
         <div className="chatbot-header-title">ResQTalk</div>
         <ModeToggle mode={mode} toggleMode={toggleMode} />
         <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
