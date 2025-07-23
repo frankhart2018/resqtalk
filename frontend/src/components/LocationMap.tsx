@@ -28,6 +28,8 @@ const LocationMap: React.FC<LocationMapProps> = ({ latitude, longitude }) => {
       L.tileLayer(TILE_SERVER_TEMPLATIZED_URL, {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        minZoom: 13,
+        maxZoom: 19,
       }).addTo(mapInstance.current);
     } else {
       mapInstance.current.setView(
