@@ -7,6 +7,10 @@ interface LocationMapProps {
   longitude: string;
 }
 
+const OSM_TILE_SERVER =
+  import.meta.env.VITE_OSM_SERVER || "https://tile.openstreetmap.org";
+const TILE_SERVER_TEMPLATIZED_URL = `${OSM_TILE_SERVER}/{z}/{x}/{y}.png`;
+
 const LocationMap: React.FC<LocationMapProps> = ({ latitude, longitude }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
@@ -21,7 +25,7 @@ const LocationMap: React.FC<LocationMapProps> = ({ latitude, longitude }) => {
         13
       );
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      L.tileLayer(TILE_SERVER_TEMPLATIZED_URL, {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(mapInstance.current);

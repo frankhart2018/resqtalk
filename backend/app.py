@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 import logging
 import asyncio
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Response
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from fastapi.responses import StreamingResponse
@@ -32,6 +32,7 @@ from service.utils.prompt_store import SystemPromptStore
 from service.utils.user_info_store import UserInfoStore
 from service.utils.memory_store import MemoryStore
 from service.utils.nws_api import NWSApiFacade
+from service.utils.map_store import MapStore
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -287,6 +288,19 @@ def get_user_details():
 def get_active_alerts(latitude: float, longitude: float):
     nws_api = NWSApiFacade(latitude=latitude, longitude=longitude)
     return {"activeAlerts": nws_api.get_active_alerts()}
+
+
+@app.get("/map/{z}/{x}/{y}.png")
+def get_map_tiles(z: int, x: int, y: int):
+    try:
+        map_store = MapStore()
+        tile_data = map_store.get_tile(x, y, z)
+        if tile_data is None:
+            raise ValueError("Tile not found")
+        return Response(tile_data, media_type="image/png")
+    except ValueError as ve:
+        logger.error(ve)
+        raise HTTPException(status_code=404, detail="Tile not found")
 
 
 if __name__ == "__main__":
