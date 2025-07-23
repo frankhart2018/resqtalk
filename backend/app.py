@@ -31,6 +31,7 @@ from service.utils.constants import (
 from service.utils.prompt_store import SystemPromptStore
 from service.utils.user_info_store import UserInfoStore
 from service.utils.memory_store import MemoryStore
+from service.utils.nws_api import NWSApiFacade
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -278,8 +279,14 @@ def get_user_details():
     user_info = user_info_store.get_user_document()
     if not user_info:
         raise HTTPException(status_code=404, detail="User not onboarded yet.")
-    user_info["_id"] = str(user_info["_id"])  
+    user_info["_id"] = str(user_info["_id"])
     return user_info
+
+
+@app.get("/active-alerts")
+def get_active_alerts(latitude: float, longitude: float):
+    nws_api = NWSApiFacade(latitude=latitude, longitude=longitude)
+    return {"activeAlerts": nws_api.get_active_alerts()}
 
 
 if __name__ == "__main__":

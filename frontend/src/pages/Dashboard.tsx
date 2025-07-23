@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import './Dashboard.css';
-import ThemeToggle from '../components/ThemeToggle';
-import GodModeNav from '../components/GodModeNav';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import "./Dashboard.css";
+import ThemeToggle from "../components/ThemeToggle";
+import GodModeNav from "../components/GodModeNav";
 
 const Dashboard: React.FC = () => {
-  const [theme, setTheme] = useState('dark');
-
+  const [theme, setTheme] = useState("dark");
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
 
   return (
@@ -34,7 +33,7 @@ const Dashboard: React.FC = () => {
           <Link to="/info" className="dashboard-card">
             <h2>Stored Info</h2>
           </Link>
-          <Link to="/live-alerts" className="dashboard-card">
+          <Link to="/alerts" className="dashboard-card">
             <h2>Live Alerts</h2>
           </Link>
           <Link to="/sos" className="dashboard-card">
