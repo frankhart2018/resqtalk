@@ -9,6 +9,7 @@ import { playSound, stopSound } from "../tools/sound-tools";
 const SOSTools: React.FC = () => {
   const [theme, setTheme] = useState("dark");
   const [isSirenPlaying, setIsSirenPlaying] = useState(false);
+  const [isFlashing, setIsFlashing] = useState(false);
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
@@ -25,6 +26,10 @@ const SOSTools: React.FC = () => {
     });
   };
 
+  const handleFlashToggle = () => {
+    setIsFlashing((prevState) => !prevState);
+  };
+
   return (
     <div className={`chatbot ${theme}`}>
       <div className="chatbot-header">
@@ -37,7 +42,11 @@ const SOSTools: React.FC = () => {
         <button className="siren-button" onClick={handleSirenToggle}>
           {isSirenPlaying ? "Stop Siren" : "Play Siren"}
         </button>
+        <button className="flash-button" onClick={handleFlashToggle}>
+          {isFlashing ? "Stop Flash" : "Start Flash"}
+        </button>
       </div>
+      {isFlashing && <div className="flash-overlay" onClick={handleFlashToggle}></div>}
     </div>
   );
 };
