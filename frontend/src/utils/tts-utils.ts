@@ -2,6 +2,7 @@ const getBestVoice = (): SpeechSynthesisVoice => {
   const voices = speechSynthesis.getVoices();
   const preferredVoices = [
     "Daniel",
+    "Daniel (English (United Kingdom))",
     "Google US English",
     "Microsoft David",
     "Microsoft Mark",

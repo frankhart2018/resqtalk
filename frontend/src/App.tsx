@@ -11,6 +11,7 @@ import "./App.css";
 import { registerTool } from "./tools/tool-utils";
 import { playSound, stopSound } from "./tools/sound-tools";
 import { getLocation, LOCATION_RESULT } from "./tools/location-tools";
+import { startFlash, stopFlash } from "./tools/flash-tools";
 import { Routes, Route } from "react-router-dom";
 
 registerTool(
@@ -28,6 +29,14 @@ registerTool(
   LOCATION_RESULT,
   getLocation
 );
+registerTool(
+  "startFlash",
+  "Start a flashing light on the screen to attract attention",
+  [],
+  null,
+  startFlash
+);
+registerTool("stopFlash", "Stop the flashing light on the screen", [], null, stopFlash);
 
 const App: React.FC = () => {
   getLocation();
