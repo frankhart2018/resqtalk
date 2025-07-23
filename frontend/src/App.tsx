@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import StoredInfo from "./pages/StoredInfo";
 import SOSTools from "./pages/SOSTools";
 import NotFound from "./pages/NotFound";
+import LiveAlerts from "./pages/LiveAlerts";
 import "./App.css";
 import { registerTool } from "./tools/tool-utils";
 import { playSound, stopSound } from "./tools/sound-tools";
@@ -36,7 +37,13 @@ registerTool(
   null,
   startFlash
 );
-registerTool("stopFlash", "Stop the flashing light on the screen", [], null, stopFlash);
+registerTool(
+  "stopFlash",
+  "Stop the flashing light on the screen",
+  [],
+  null,
+  stopFlash
+);
 
 const App: React.FC = () => {
   getLocation();
@@ -51,6 +58,7 @@ const App: React.FC = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/info" element={<StoredInfo />} />
         <Route path="/sos" element={<SOSTools />} />
+        <Route path="/alerts" element={<LiveAlerts />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

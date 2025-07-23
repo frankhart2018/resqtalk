@@ -1,5 +1,6 @@
 import { getPromptWithTools } from "../tools/tool-utils";
 import type {
+  GetActiveAlertsResponse,
   GetCurrentModeResponse,
   GetCurrentPrivilegesResponse,
   GetDisastersResponse,
@@ -217,5 +218,26 @@ export const getDisasters = async (): Promise<GetDisastersResponse> => {
       return response.json();
     }
     throw new Error(`HTTP error! status: ${response.status}`);
+  });
+};
+
+export const getActiveAlerts = async (
+  latitude: number,
+  longitude: number
+): Promise<GetActiveAlertsResponse> => {
+  return fetch(
+    `${API_HOST}/active-alerts?latitude=${latitude}&longitude=${longitude}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...getCfAuthHeaders(),
+      },
+    }
+  ).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
   });
 };
