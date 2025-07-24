@@ -8,3 +8,5 @@ LANGFUSE_URL = os.getenv("LANGFUSE_URL", "http://localhost:3000")
 
 LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY", None)
 LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY", None)
+
+MAP_TILE_SERVER = os.getenv("MAP_TILE_SERVER", "https://tile.openstreetmap.org")
