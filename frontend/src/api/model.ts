@@ -52,3 +52,8 @@ export interface GetDisastersResponse {
 export interface GetActiveAlertsResponse {
   activeAlerts: string[];
 }
+
+export interface DisasterContext {
+  disaster: string;
+  phase: string;
+}

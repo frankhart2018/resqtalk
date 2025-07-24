@@ -68,6 +68,22 @@
 }
 
 .disaster-button.selected {
-  background-color: var(--button-border-color);
-  color: white; /* Ensure text color is readable on the filled button */
+  background-color: #007bff;
+  color: white;
+}
+
+.submit-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 8px;
+  border: none;
+  background-color: #28a745;
+  color: white;
+}
+
+.submit-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
 }

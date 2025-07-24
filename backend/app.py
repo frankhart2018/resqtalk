@@ -24,6 +24,7 @@ from service.agents import (
 from service.data_models.generate_text import PromptRequest
 from service.data_models.set_prompt import SetPromptRequest
 from service.data_models.onboarding import OnboardingRequest, OnboardingResponse
+from service.data_models.disaster_context import DisasterContextRequest  
 from service.utils.constants import (
     COMM_AGENT_SYS_PROMPT_KEY,
     MEMORY_AGENT_SYS_PROMPT_KEY,
@@ -55,7 +56,7 @@ comm_agent: Optional[CommunicationAgent] = None
 voice_agent: Optional[VoiceCommunicationAgent] = None
 voice_memory_agent: Optional[VoiceMemoryAgent] = None
 current_mode: Mode = Mode.TEXT
-
+disaster_context: Optional[DisasterContextRequest] = None     
 
 async def memory_processor():
     global memory_queue, memory_agent, voice_memory_agent
@@ -282,6 +283,32 @@ def get_user_details():
         raise HTTPException(status_code=404, detail="User not onboarded yet.")
     user_info["_id"] = str(user_info["_id"])
     return user_info
+
+
+@app.post("/disaster-context")
+def set_disaster_context(disaster_context_request: DisasterContextRequest):
+    global disaster_context
+    disaster_context = disaster_context_request
+    logger.info(f"Disaster context set: {disaster_context}")
+    return {"status": "ok"}
+
+
+@app.get("/disaster-context")
+def get_disaster_context():
+    global disaster_context
+    logger.info(f"Fetching disaster context: {disaster_context}")
+    if not disaster_context:
+        raise HTTPException(status_code=404, detail="Disaster context not set yet.")
+    return disaster_context
+
+
+@app.delete("/disaster-context")
+def delete_disaster_context():
+    logger.info("Deleting disaster context")
+    global disaster_context
+    disaster_context = None
+    logger.info("Disaster context deleted")
+    return {"status": "ok"}
 
 
 @app.get("/active-alerts")

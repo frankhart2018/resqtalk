@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDisasters } from "../api/api";
+import { getDisasters, getDisasterContext, setDisasterContext } from "../api/api";
 import type { GetDisastersResponse } from "../api/model";
 import ThemeToggle from "../components/ThemeToggle";
 import GodModeNav from "../components/GodModeNav";
@@ -16,6 +16,20 @@ const Begin: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const checkDisasterContext = async () => {
+      try {
+        const disasterContext = await getDisasterContext();
+        if (disasterContext) {
+          navigate("/dashboard");
+        }
+      } catch (error) {
+        // If disaster context is not found, we can assume it's not set.
+        // The error is expected in this case, so we can ignore it.
+      }
+    };
+
+    checkDisasterContext();
+
     getDisasters()
       .then((data: GetDisastersResponse) => {
         setDisasters(data.disasters);
@@ -33,6 +47,17 @@ const Begin: React.FC = () => {
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+  };
+
+  const handleSubmit = async () => {
+    if (selectedDisaster && disasterPhase) {
+      try {
+        await setDisasterContext({ disaster: selectedDisaster, phase: disasterPhase });
+        navigate("/dashboard");
+      } catch (error) {
+        alert("An error occurred while setting the disaster context.");
+      }
+    }
   };
 
   return (
@@ -70,6 +95,13 @@ const Begin: React.FC = () => {
                 </button>
               ))}
             </div>
+            <button
+              className="submit-button"
+              disabled={!selectedDisaster || !disasterPhase}
+              onClick={handleSubmit}
+            >
+              Submit
+            </button>
           </>
         )}
       </div>

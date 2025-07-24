@@ -1,14 +1,26 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import ThemeToggle from "../components/ThemeToggle";
 import GodModeNav from "../components/GodModeNav";
+import { deleteDisasterContext } from "../api/api.ts";
 
 const Dashboard: React.FC = () => {
   const [theme, setTheme] = useState("dark");
+  const navigate = useNavigate();
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+  };
+
+  const handleChangeDisaster = async () => {
+    try {
+      await deleteDisasterContext();
+      navigate("/begin");
+    } catch (error) {
+      console.error("Error deleting disaster context:", error);
+      alert("An error occurred while changing the disaster.");
+    }
   };
 
   return (
@@ -24,7 +36,7 @@ const Dashboard: React.FC = () => {
           <Link to="/maps" className="dashboard-card">
             <h2>Maps</h2>
           </Link>
-          <Link to="/" className="dashboard-card">
+          <Link to="/chat" className="dashboard-card">
             <h2>Chat</h2>
           </Link>
           <Link to="/checklist" className="dashboard-card">
@@ -39,6 +51,9 @@ const Dashboard: React.FC = () => {
           <Link to="/sos" className="dashboard-card">
             <h2>SOS Tools</h2>
           </Link>
+          <div onClick={handleChangeDisaster} className="dashboard-card">
+            <h2>Change Disaster</h2>
+          </div>
         </div>
       </div>
     </div>
