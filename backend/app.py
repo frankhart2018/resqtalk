@@ -27,12 +27,17 @@ from service.data_models.onboarding import OnboardingRequest, OnboardingResponse
 from service.utils.constants import (
     COMM_AGENT_SYS_PROMPT_KEY,
     MEMORY_AGENT_SYS_PROMPT_KEY,
+    CACHED_MAP_RADIUS,
+    CACHED_MAP_MIN_ZOOM_LEVEL,
+    CACHED_MAP_MAX_ZOOM_LEVEL,
+    WAIT_BETWEEN_RETRIES,
 )
 from service.utils.prompt_store import SystemPromptStore
 from service.utils.user_info_store import UserInfoStore
 from service.utils.memory_store import MemoryStore
 from service.utils.nws_api import NWSApiFacade
 from service.utils.map_store import MapStore
+from service.utils.map_downloader import MapDownloader
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -54,6 +59,7 @@ memory_queue: Optional[asyncio.Queue] = None
 comm_agent: Optional[CommunicationAgent] = None
 voice_agent: Optional[VoiceCommunicationAgent] = None
 voice_memory_agent: Optional[VoiceMemoryAgent] = None
+map_downloader_task: Optional[asyncio.Task] = None
 current_mode: Mode = Mode.TEXT
 
 
@@ -74,6 +80,26 @@ async def memory_processor():
             break
         except Exception as e:
             logging.error(f"Error in memory processor: {e}")
+
+
+async def map_downloader(lat: float, lon: float):
+    while True:
+        map_downloader = MapDownloader()
+        result = await map_downloader.download_area(
+            center_lat=lat,
+            center_lon=lon,
+            radius_miles=CACHED_MAP_RADIUS,
+            min_zoom=CACHED_MAP_MIN_ZOOM_LEVEL,
+            max_zoom=CACHED_MAP_MAX_ZOOM_LEVEL,
+        )
+
+        if result:
+            break
+        else:
+            logger.error(
+                f"Failed to complete download, retring in {WAIT_BETWEEN_RETRIES} seconds!"
+            )
+            asyncio.sleep(WAIT_BETWEEN_RETRIES)
 
 
 @asynccontextmanager
@@ -97,6 +123,13 @@ async def lifespan(app: FastAPI):
         memory_task.cancel()
         try:
             await memory_task
+        except asyncio.CancelledError:
+            pass
+
+    if map_downloader_task and not map_downloader_task.done():
+        map_downloader_task.cancel()
+        try:
+            await map_downloader_task
         except asyncio.CancelledError:
             pass
 
@@ -248,12 +281,19 @@ def get_memories():
 
 
 @app.post("/onboarding")
-def onboard_device(onboarding_request: OnboardingRequest):
+async def onboard_device(onboarding_request: OnboardingRequest):
     user_info_store = UserInfoStore()
     if user_info_store.find_singular_user():
         return {"status": OnboardingResponse.ALREADY_REGISTERED}
 
+    global map_downloader_task
     user_info_store.onboard_user(onboarding_request)
+    # map_downloader_task = asyncio.create_task(
+    #     map_downloader(
+    #         lat=onboarding_request.location.latitude,
+    #         lon=onboarding_request.location.longitude,
+    #     )
+    # )
     return {"status": OnboardingResponse.OK}
 
 

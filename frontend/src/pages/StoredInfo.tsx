@@ -10,7 +10,9 @@ import "./StoredInfo.css";
 
 const StoredInfo: React.FC = () => {
   const [theme, setTheme] = useState("dark");
-  const [userDetails, setUserDetails] = useState<GetUserDetailsResponse | null>(null);
+  const [userDetails, setUserDetails] = useState<GetUserDetailsResponse | null>(
+    null
+  );
 
   useEffect(() => {
     getUserDetails()
@@ -54,7 +56,11 @@ const StoredInfo: React.FC = () => {
                 readOnly
               />
               <label>Gender:</label>
-              <select name="gender" value={userDetails.primaryUserDetails.gender} disabled>
+              <select
+                name="gender"
+                value={userDetails.primaryUserDetails.gender}
+                disabled
+              >
                 <option value="male">Male</option>
                 <option value="female">Female</option>
               </select>
@@ -78,33 +84,38 @@ const StoredInfo: React.FC = () => {
                 userDetails.dependentUserDetails.map((dependent, index) => (
                   <div key={index} className="dependent-section">
                     <h4>Dependent {index + 1}:</h4>
-                  <label>Name:</label>
-                  <input name="name" value={dependent.name} readOnly />
-                  <label>Age:</label>
-                  <input name="age" value={dependent.age} type="number" readOnly />
-                  <label>Gender:</label>
-                  <select name="gender" value={dependent.gender} disabled>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                  </select>
-                  <label>Relationship:</label>
-                  <input
-                    name="relationship"
-                    value={dependent.relationship}
-                    readOnly
-                  />
-                  <label>Allergies:</label>
-                  <input
-                    name="allergies"
-                    value={dependent.allergies.join(", ")}
-                    readOnly
-                  />
-                  <label>Medications:</label>
-                  <input
-                    name="medications"
-                    value={dependent.medications.join(", ")}
-                    readOnly
-                  />
+                    <label>Name:</label>
+                    <input name="name" value={dependent.name} readOnly />
+                    <label>Age:</label>
+                    <input
+                      name="age"
+                      value={dependent.age}
+                      type="number"
+                      readOnly
+                    />
+                    <label>Gender:</label>
+                    <select name="gender" value={dependent.gender} disabled>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                    <label>Relationship:</label>
+                    <input
+                      name="relationship"
+                      value={dependent.relationship}
+                      readOnly
+                    />
+                    <label>Allergies:</label>
+                    <input
+                      name="allergies"
+                      value={dependent.allergies.join(", ")}
+                      readOnly
+                    />
+                    <label>Medications:</label>
+                    <input
+                      name="medications"
+                      value={dependent.medications.join(", ")}
+                      readOnly
+                    />
                   </div>
                 ))
               )}
@@ -115,7 +126,9 @@ const StoredInfo: React.FC = () => {
                   <input
                     type="checkbox"
                     value="earthquake"
-                    checked={userDetails.selectedDisasters.includes("earthquake")}
+                    checked={userDetails.selectedDisasters.includes(
+                      "earthquake"
+                    )}
                     readOnly
                   />
                   Earthquake
@@ -141,17 +154,21 @@ const StoredInfo: React.FC = () => {
               </div>
 
               <h2>Location</h2>
-              {userDetails.location.latitude && userDetails.location.longitude && (
-                <div className="detected-location-text">
-                  Latitude {userDetails.location.latitude}, Longitude {userDetails.location.longitude}
-                </div>
-              )}
-              {userDetails.location.latitude && userDetails.location.longitude && (
-                <LocationMap
-                  latitude={userDetails.location.latitude.toString()}
-                  longitude={userDetails.location.longitude.toString()}
-                />
-              )}
+              {userDetails.location.latitude &&
+                userDetails.location.longitude && (
+                  <div className="detected-location-text">
+                    Latitude {userDetails.location.latitude}, Longitude{" "}
+                    {userDetails.location.longitude}
+                  </div>
+                )}
+              {userDetails.location.latitude &&
+                userDetails.location.longitude && (
+                  <LocationMap
+                    latitude={userDetails.location.latitude.toString()}
+                    longitude={userDetails.location.longitude.toString()}
+                    useOnline={true}
+                  />
+                )}
             </form>
           )}
           {!userDetails && <p>Loading user details or no user data found.</p>}

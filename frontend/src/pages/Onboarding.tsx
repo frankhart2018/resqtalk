@@ -290,6 +290,7 @@ const Onboarding = () => {
             <LocationMap
               latitude={location.latitude}
               longitude={location.longitude}
+              useOnline={true}
             />
           )}
 

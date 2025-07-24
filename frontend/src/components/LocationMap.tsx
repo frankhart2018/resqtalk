@@ -5,13 +5,20 @@ import "leaflet/dist/leaflet.css";
 interface LocationMapProps {
   latitude: string;
   longitude: string;
+  useOnline: boolean;
 }
 
+const ONLINE_OSM_TILE_SERVER = "https://tile.openstreetmap.org";
 const OSM_TILE_SERVER =
-  import.meta.env.VITE_OSM_SERVER || "https://tile.openstreetmap.org";
+  import.meta.env.VITE_OSM_SERVER || ONLINE_OSM_TILE_SERVER;
 const TILE_SERVER_TEMPLATIZED_URL = `${OSM_TILE_SERVER}/{z}/{x}/{y}.png`;
+const ONLINE_SERVER_TEMPLATIZED_URL = `${ONLINE_OSM_TILE_SERVER}/{z}/{x}/{y}.png`;
 
-const LocationMap: React.FC<LocationMapProps> = ({ latitude, longitude }) => {
+const LocationMap: React.FC<LocationMapProps> = ({
+  latitude,
+  longitude,
+  useOnline,
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const markerInstance = useRef<L.Marker | null>(null);
@@ -25,12 +32,15 @@ const LocationMap: React.FC<LocationMapProps> = ({ latitude, longitude }) => {
         13
       );
 
-      L.tileLayer(TILE_SERVER_TEMPLATIZED_URL, {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        minZoom: 13,
-        maxZoom: 19,
-      }).addTo(mapInstance.current);
+      L.tileLayer(
+        useOnline ? ONLINE_SERVER_TEMPLATIZED_URL : TILE_SERVER_TEMPLATIZED_URL,
+        {
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          minZoom: 13,
+          maxZoom: 19,
+        }
+      ).addTo(mapInstance.current);
     } else {
       mapInstance.current.setView(
         [parseFloat(latitude), parseFloat(longitude)],
@@ -57,7 +67,7 @@ const LocationMap: React.FC<LocationMapProps> = ({ latitude, longitude }) => {
       shadowUrl:
         "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
     });
-  }, [latitude, longitude]);
+  }, [latitude, longitude, useOnline]);
 
   return (
     <div id="map" ref={mapRef} style={{ height: "300px", width: "100%" }}></div>
