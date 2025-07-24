@@ -288,12 +288,12 @@ async def onboard_device(onboarding_request: OnboardingRequest):
 
     global map_downloader_task
     user_info_store.onboard_user(onboarding_request)
-    map_downloader_task = asyncio.create_task(
-        map_downloader(
-            lat=onboarding_request.location.latitude,
-            lon=onboarding_request.location.longitude,
-        )
-    )
+    # map_downloader_task = asyncio.create_task(
+    #     map_downloader(
+    #         lat=onboarding_request.location.latitude,
+    #         lon=onboarding_request.location.longitude,
+    #     )
+    # )
     return {"status": OnboardingResponse.OK}
 
 
