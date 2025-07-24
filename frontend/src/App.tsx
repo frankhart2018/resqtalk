@@ -13,7 +13,7 @@ import { registerTool } from "./tools/tool-utils";
 import { playSound, stopSound } from "./tools/sound-tools";
 import { getLocation, LOCATION_RESULT } from "./tools/location-tools";
 import { startFlash, stopFlash } from "./tools/flash-tools";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route,Navigate } from "react-router-dom";
 
 registerTool(
   "playSound",
@@ -51,7 +51,8 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <Routes>
-        <Route path="/" element={<Chatbot />} />
+        <Route path="/" element={<Navigate to="/onboard" />} />
+        <Route path="/chat" element={<Chatbot />} />
         <Route path="/god" element={<GodMode />} />
         <Route path="/onboard" element={<Onboarding />} />
         <Route path="/begin" element={<Begin />} />

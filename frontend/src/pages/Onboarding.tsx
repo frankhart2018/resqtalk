@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./Onboarding.css";
-import { submitOnboarding } from "../api/api";
+import { submitOnboarding,getUserDetails } from "../api/api";
 import type { OnboardingData } from "../api/model";
 import ThemeToggle from "../components/ThemeToggle";
 import LocationMap from "../components/LocationMap";
@@ -80,6 +80,21 @@ const Onboarding = () => {
   };
 
   useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const userDetails = await getUserDetails();
+        console.log("User details:", userDetails);
+        if (userDetails) {
+          navigate("/begin");
+        }
+      } catch (error) {
+        // If user details are not found, we can assume the user is not onboarded.
+        // The error is expected in this case, so we can ignore it.
+      }
+    };
+
+    checkUser();
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -98,7 +113,7 @@ const Onboarding = () => {
     } else {
       alert("Geolocation is not supported by your browser.");
     }
-  }, []);
+  }, [navigate]);
 
   const handleDisasterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;

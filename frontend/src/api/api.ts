@@ -9,6 +9,7 @@ import type {
   GetUserDetailsResponse,
   OnboardingData,
   VoiceModeResponse,
+  DisasterContext,
 } from "./model";
 import type { OptionalReadableBytesBuffer } from "./types";
 
@@ -240,4 +241,56 @@ export const getActiveAlerts = async (
       return response.json();
     }
   });
+};
+
+export const setDisasterContext = async (disasterContext: DisasterContext) => {
+  const response = await fetch(`${API_HOST}/disaster-context`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getCfAuthHeaders(),
+    },
+    body: JSON.stringify(disasterContext),
+  });
+  console.log("Setting disaster context:", response);
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(`Setting disaster context failed: ${result.status}`);
+  }
+
+  return response.json();
+};
+
+export const getDisasterContext = async (): Promise<DisasterContext> => {
+  return fetch(`${API_HOST}/disaster-context`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...getCfAuthHeaders(),
+    },
+  }).then((response) => {
+    console.log("Fetching disaster context:", response);
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  });
+};
+
+export const deleteDisasterContext = async () => {
+  const response = await fetch(`${API_HOST}/disaster-context`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      ...getCfAuthHeaders(),
+    },
+  });
+  console.log("Deleting disaster context:", response);
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(`Deleting disaster context failed: ${result.status}`);
+  }
+
+  return response.json();
 };

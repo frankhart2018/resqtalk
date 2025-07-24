@@ -36,13 +36,20 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
 
 .dashboard-card:hover {
   background-color: var(--button-hover-background);
 }
 
-.dashboard-card h2 {
-  font-size: 1.2rem;
-  margin: 0;
+.dashboard-card:hover h2 {
+  color: #007bff;
 }
+
+.dashboard-card h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+
