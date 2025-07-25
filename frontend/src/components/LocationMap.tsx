@@ -6,6 +6,7 @@ interface LocationMapProps {
   latitude: string;
   longitude: string;
   useOnline: boolean;
+  height?: string;
 }
 
 const ONLINE_OSM_TILE_SERVER = "https://tile.openstreetmap.org";
@@ -18,6 +19,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
   latitude,
   longitude,
   useOnline,
+  height = "300px",
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
@@ -67,7 +69,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
   }, [latitude, longitude, useOnline]);
 
   return (
-    <div id="map" ref={mapRef} style={{ height: "300px", width: "100%" }}></div>
+    <div id="map" ref={mapRef} style={{ height, width: "100%" }}></div>
   );
 };
 
