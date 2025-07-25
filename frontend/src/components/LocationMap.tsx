@@ -35,8 +35,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
       L.tileLayer(
         useOnline ? ONLINE_SERVER_TEMPLATIZED_URL : TILE_SERVER_TEMPLATIZED_URL,
         {
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          attribution: "&copy; OpenStreetMap contributors",
           minZoom: 13,
           maxZoom: 19,
         }
@@ -61,11 +60,9 @@ const LocationMap: React.FC<LocationMapProps> = ({
     }
 
     L.Icon.Default.mergeOptions({
-      iconRetinaUrl:
-        "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-      iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-      shadowUrl:
-        "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+      iconRetinaUrl: "/marker-icon-2x.png",
+      iconUrl: "/marker-icon.png",
+      shadowUrl: "/marker-shadow.png",
     });
   }, [latitude, longitude, useOnline]);
 

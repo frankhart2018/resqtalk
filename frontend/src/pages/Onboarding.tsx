@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./Onboarding.css";
-import { submitOnboarding,getUserDetails } from "../api/api";
+import { submitOnboarding, getUserDetails } from "../api/api";
 import type { OnboardingData } from "../api/model";
 import ThemeToggle from "../components/ThemeToggle";
 import LocationMap from "../components/LocationMap";
@@ -87,7 +87,8 @@ const Onboarding = () => {
         if (userDetails) {
           navigate("/begin");
         }
-      } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
         // If user details are not found, we can assume the user is not onboarded.
         // The error is expected in this case, so we can ignore it.
       }
