@@ -218,6 +218,7 @@
 .chatbot-form {
   display: flex;
   padding: 20px;
+  align-items: center;
 }
 
 .chatbot-input {
@@ -337,4 +338,3 @@
     transform: scale(1);
   }
 }
-

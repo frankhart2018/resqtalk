@@ -1,0 +1,27 @@
+.chatbot-header {
+  padding: 20px;
+  font-size: 1.5em;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chatbot-header-title {
+  flex-grow: 1;
+  text-align: center;
+}
+
+.navbar-left, .navbar-right {
+    display: flex;
+    align-items: center;
+    min-width: 50px;
+}
+
+.navbar-left {
+    justify-content: flex-start;
+}
+
+.navbar-right {
+    justify-content: flex-end;
+}

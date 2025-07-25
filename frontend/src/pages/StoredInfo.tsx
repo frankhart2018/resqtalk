@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
-import ThemeToggle from "../components/ThemeToggle";
-import GodModeNav from "../components/GodModeNav";
 import { getUserDetails } from "../api/api";
 import type { GetUserDetailsResponse } from "../api/model";
 import "./Chatbot.css";
-import LocationMap from "../components/LocationMap";
 import "./Onboarding.css";
 import "./StoredInfo.css";
+import Navbar from "../components/Navbar";
+import { useTheme } from "../contexts/ThemeContext";
 
 const StoredInfo: React.FC = () => {
-  const [theme, setTheme] = useState("dark");
+  const { theme } = useTheme();
   const [userDetails, setUserDetails] = useState<GetUserDetailsResponse | null>(
     null
   );
@@ -25,19 +24,10 @@ const StoredInfo: React.FC = () => {
       });
   }, []);
 
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
-
   return (
     <div className={`chatbot ${theme}`}>
-      <div className="chatbot-header">
-        <GodModeNav />
-        <div className="chatbot-header-title">ResQTalk</div>
-        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      </div>
+      <Navbar pageTitle="Stored Info" />
       <div className="onboarding-container">
-        <h3 className="stored-info-section-title">User Details</h3>
         <>
           {userDetails && (
             <form>
@@ -156,18 +146,10 @@ const StoredInfo: React.FC = () => {
               <h2>Location</h2>
               {userDetails.location.latitude &&
                 userDetails.location.longitude && (
-                  <div className="detected-location-text">
-                    Latitude {userDetails.location.latitude}, Longitude{" "}
-                    {userDetails.location.longitude}
+                  <div className="stored-info-location">
+                    Latitude: {userDetails.location.latitude} <br />
+                    Longitude: {userDetails.location.longitude}
                   </div>
-                )}
-              {userDetails.location.latitude &&
-                userDetails.location.longitude && (
-                  <LocationMap
-                    latitude={userDetails.location.latitude.toString()}
-                    longitude={userDetails.location.longitude.toString()}
-                    useOnline={true}
-                  />
                 )}
             </form>
           )}

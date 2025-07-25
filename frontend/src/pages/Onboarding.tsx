@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import "./Onboarding.css";
 import { submitOnboarding, getUserDetails } from "../api/api";
 import type { OnboardingData } from "../api/model";
-import ThemeToggle from "../components/ThemeToggle";
 import LocationMap from "../components/LocationMap";
 import { useNavigate } from "react-router-dom";
-import GodModeNav from "../components/GodModeNav";
+import Navbar from "../components/Navbar";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface PrimaryUserDetails {
   name: string;
@@ -25,6 +25,7 @@ interface Location {
 }
 
 const Onboarding = () => {
+  const { theme } = useTheme();
   const [primaryUserDetails, setPrimaryUserDetails] =
     useState<PrimaryUserDetails>({
       name: "",
@@ -41,12 +42,7 @@ const Onboarding = () => {
     longitude: "",
   });
   const [selectedDisasters, setSelectedDisasters] = useState<string[]>([]);
-  const [theme, setTheme] = useState("dark");
   const navigate = useNavigate();
-
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
 
   const handlePrimaryUserChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -170,11 +166,7 @@ const Onboarding = () => {
 
   return (
     <div className={`chatbot ${theme}`}>
-      <div className="chatbot-header">
-        <GodModeNav />
-        <div className="chatbot-header-title">Onboarding</div>
-        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      </div>
+      <Navbar pageTitle="Onboarding" />
       <div className="onboarding-container">
         <form onSubmit={handleSubmit}>
           <h2>Primary User</h2>

@@ -1,19 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { getActiveAlerts } from "../api/api";
-import ThemeToggle from "../components/ThemeToggle";
-import GodModeNav from "../components/GodModeNav";
+import Navbar from "../components/Navbar";
+import { useTheme } from "../contexts/ThemeContext";
 import "./LiveAlerts.css";
 import "../App.css"; // For chatbot class
 
 const LiveAlerts: React.FC = () => {
+  const { theme } = useTheme();
   const [alerts, setAlerts] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [theme, setTheme] = useState("dark"); // Assuming a default theme
-
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
 
   useEffect(() => {
     const fetchAlertsWithLocation = async (
@@ -57,12 +53,7 @@ const LiveAlerts: React.FC = () => {
 
   return (
     <div className={`chatbot ${theme}`}>
-      <div className="chatbot-header">
-        <GodModeNav />
-        <div className="chatbot-header-title">ResQTalk</div>
-        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      </div>
-      <h3 className="dashboard-title">Live Alerts</h3>
+      <Navbar pageTitle="Live Alerts" />
       <div className="dashboard-container">
         <div className="live-alerts-content">
           {loading ? (

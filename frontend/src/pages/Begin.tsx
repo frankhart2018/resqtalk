@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDisasters, getDisasterContext, setDisasterContext } from "../api/api";
+import {
+  getDisasters,
+  getDisasterContext,
+  setDisasterContext,
+} from "../api/api";
 import type { GetDisastersResponse } from "../api/model";
-import ThemeToggle from "../components/ThemeToggle";
-import GodModeNav from "../components/GodModeNav";
+import Navbar from "../components/Navbar";
+import { useTheme } from "../contexts/ThemeContext";
 import "./Chatbot.css"; // For theme
 import "./Begin.css";
 
 const Begin: React.FC = () => {
-  const [theme, setTheme] = useState("dark");
+  const { theme } = useTheme();
   const [disasters, setDisasters] = useState<string[]>([]);
   const [selectedDisaster, setSelectedDisaster] = useState<string | null>(null);
   const [disasterPhase, setDisasterPhase] = useState<string>("pre-disaster"); // Default to pre-disaster
@@ -22,7 +26,8 @@ const Begin: React.FC = () => {
         if (disasterContext) {
           navigate("/dashboard");
         }
-      } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
         // If disaster context is not found, we can assume it's not set.
         // The error is expected in this case, so we can ignore it.
       }
@@ -45,16 +50,16 @@ const Begin: React.FC = () => {
       });
   }, [navigate]);
 
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
-
   const handleSubmit = async () => {
     if (selectedDisaster && disasterPhase) {
       try {
-        await setDisasterContext({ disaster: selectedDisaster, phase: disasterPhase });
+        await setDisasterContext({
+          disaster: selectedDisaster,
+          phase: disasterPhase,
+        });
         navigate("/dashboard");
-      } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
         alert("An error occurred while setting the disaster context.");
       }
     }
@@ -62,12 +67,7 @@ const Begin: React.FC = () => {
 
   return (
     <div className={`chatbot ${theme}`}>
-      <div className="chatbot-header">
-        <GodModeNav />
-        <div className="chatbot-header-title">ResQTalk</div>
-        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      </div>
-      <h3 className="begin-heading">Need help? Let's begin.</h3>
+      <Navbar pageTitle="Begin" />
       <div className="begin-content">
         {isLoading ? (
           <div>Loading disasters...</div>
@@ -88,7 +88,9 @@ const Begin: React.FC = () => {
               {disasters.map((disaster) => (
                 <button
                   key={disaster}
-                  className={`disaster-button ${selectedDisaster === disaster ? "selected" : ""}`}
+                  className={`disaster-button ${
+                    selectedDisaster === disaster ? "selected" : ""
+                  }`}
                   onClick={() => setSelectedDisaster(disaster)}
                 >
                   {disaster.toUpperCase()}
