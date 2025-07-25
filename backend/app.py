@@ -24,7 +24,7 @@ from service.agents import (
 from service.data_models.generate_text import PromptRequest
 from service.data_models.set_prompt import SetPromptRequest
 from service.data_models.onboarding import OnboardingRequest, OnboardingResponse
-from service.data_models.disaster_context import DisasterContextRequest  
+from service.data_models.disaster_context import DisasterContextRequest
 from service.utils.constants import (
     COMM_AGENT_SYS_PROMPT_KEY,
     MEMORY_AGENT_SYS_PROMPT_KEY,
@@ -62,7 +62,8 @@ voice_agent: Optional[VoiceCommunicationAgent] = None
 voice_memory_agent: Optional[VoiceMemoryAgent] = None
 map_downloader_task: Optional[asyncio.Task] = None
 current_mode: Mode = Mode.TEXT
-disaster_context: Optional[DisasterContextRequest] = None     
+disaster_context: Optional[DisasterContextRequest] = None
+
 
 async def memory_processor():
     global memory_queue, memory_agent, voice_memory_agent
@@ -95,6 +96,7 @@ async def map_downloader(lat: float, lon: float):
         )
 
         if result:
+            logger.info("Download complete, existing map downloader coroutine.")
             break
         else:
             logger.error(
@@ -289,12 +291,12 @@ async def onboard_device(onboarding_request: OnboardingRequest):
 
     global map_downloader_task
     user_info_store.onboard_user(onboarding_request)
-    # map_downloader_task = asyncio.create_task(
-    #     map_downloader(
-    #         lat=onboarding_request.location.latitude,
-    #         lon=onboarding_request.location.longitude,
-    #     )
-    # )
+    map_downloader_task = asyncio.create_task(
+        map_downloader(
+            lat=onboarding_request.location.latitude,
+            lon=onboarding_request.location.longitude,
+        )
+    )
     return {"status": OnboardingResponse.OK}
 
 
