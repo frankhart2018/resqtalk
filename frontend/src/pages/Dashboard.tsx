@@ -1,17 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Dashboard.css";
-import ThemeToggle from "../components/ThemeToggle";
-import GodModeNav from "../components/GodModeNav";
+import Navbar from "../components/Navbar";
+import { useTheme } from "../contexts/useTheme";
 import { deleteDisasterContext } from "../api/api.ts";
 
 const Dashboard: React.FC = () => {
-  const [theme, setTheme] = useState("dark");
+  const { theme } = useTheme();
   const navigate = useNavigate();
-
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
 
   const handleChangeDisaster = async () => {
     try {
@@ -25,12 +21,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className={`chatbot ${theme}`}>
-      <div className="chatbot-header">
-        <GodModeNav />
-        <div className="chatbot-header-title">ResQTalk</div>
-        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      </div>
-      <h3 className="dashboard-title">Dashboard</h3>
+      <Navbar pageTitle="Dashboard" />
       <div className="dashboard-container">
         <div className="dashboard-grid">
           <Link to="/maps" className="dashboard-card">

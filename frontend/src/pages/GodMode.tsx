@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import ThemeToggle from "../components/ThemeToggle";
-import BackIcon from "../components/BackIcon";
+import Navbar from "../components/Navbar";
+import { useTheme } from "../contexts/useTheme";
 import { useNavigate } from "react-router-dom";
 import {
   getCurrentPrivileges,
@@ -20,7 +20,7 @@ import "./Chatbot.css";
 import "./GodMode.css";
 
 const GodMode: React.FC = () => {
-  const [theme, setTheme] = useState("dark");
+  const { theme } = useTheme();
   const [isGodMode, setIsGodMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [communicationAgentPrompt, setCommunicationAgentPrompt] = useState("");
@@ -71,10 +71,6 @@ const GodMode: React.FC = () => {
       });
   }, [navigate]);
 
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
-
   const handleSave = async (key: string, prompt: string) => {
     await setSystemPrompt(key, prompt);
     window.location.reload();
@@ -92,21 +88,12 @@ const GodMode: React.FC = () => {
 
   return isLoading ? (
     <div className={`chatbot ${theme}`}>
-      <div className="chatbot-header">
-        <div className="chatbot-header-title">Loading...</div>
-      </div>
+      <Navbar pageTitle="Loading..." />
     </div>
   ) : isGodMode ? (
     <div className={`chatbot ${theme}`}>
-      <div className="chatbot-header">
-        <span onClick={() => navigate("/")}>
-          <BackIcon />
-        </span>
-        <div className="chatbot-header-title">ResQTalk</div>
-        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      </div>
+      <Navbar pageTitle="भगवान Mode" />
       <div className="god-mode-content">
-        <h1 className="god-mode-title">भगवान</h1>
         <div className="prompt-box">
           <label htmlFor="communication-agent-prompt">
             Communication Agent System Prompt

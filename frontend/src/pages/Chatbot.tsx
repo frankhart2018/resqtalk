@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect, type JSX } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./Chatbot.css";
-import ThemeToggle from "../components/ThemeToggle";
+import Navbar from "../components/Navbar";
 import ModeToggle from "../components/ModeToggle";
+import { useTheme } from "../contexts/useTheme";
 import { executeToolCall } from "../tools/tool-utils";
 import { register } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
@@ -21,7 +22,6 @@ import {
   stopRecordingAudio,
 } from "../utils/recording-utils";
 import { textResponseIteratorCleaner } from "../utils/stream-iterator";
-import GodModeNav from "../components/GodModeNav";
 import SpeakerIcon from "../components/SpeakerIcon";
 import { playSpeech } from "../utils/tts-utils";
 
@@ -36,12 +36,12 @@ const registerWavEncoder = async () => {
 };
 
 const Chatbot: React.FC = () => {
+  const { theme } = useTheme();
   const [messages, setMessages] = useState<
     { text: string | JSX.Element; sender: "user" | "bot" }[]
   >([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [theme, setTheme] = useState("dark");
   const [isRecording, setIsRecording] = useState(false);
   const [mode, setMode] = useState("text");
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
@@ -200,10 +200,6 @@ const Chatbot: React.FC = () => {
   /////////////////////////////////////////////////////////////////
   // TOGGLE HANDLERS
   /////////////////////////////////////////////////////////////////
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
-
   const toggleMode = async () => {
     const newMode = mode === "text" ? "voice" : "text";
     setMode((prevMode) => (prevMode === "text" ? "voice" : "text"));
@@ -216,12 +212,7 @@ const Chatbot: React.FC = () => {
   /////////////////////////////////////////////////////////////////
   return (
     <div className={`chatbot ${theme}`}>
-      <div className="chatbot-header">
-        <GodModeNav />
-        <div className="chatbot-header-title">ResQTalk</div>
-        <ModeToggle mode={mode} toggleMode={toggleMode} />
-        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      </div>
+      <Navbar pageTitle="Chat" />
       <div className="chatbot-messages">
         {messages.map((message, index) => (
           <div key={index} className={`message-container ${message.sender}`}>
@@ -285,6 +276,7 @@ const Chatbot: React.FC = () => {
           placeholder="How can I help you in this disaster situation?"
           disabled={isLoading || mode === "voice"}
         />
+        <ModeToggle mode={mode} toggleMode={toggleMode} />
         {mode === "voice" && (
           <button
             type="button"

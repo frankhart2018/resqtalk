@@ -14,6 +14,7 @@ import { playSound, stopSound } from "./tools/sound-tools";
 import { getLocation, LOCATION_RESULT } from "./tools/location-tools";
 import { startFlash, stopFlash } from "./tools/flash-tools";
 import { Routes, Route,Navigate } from "react-router-dom";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 registerTool(
   "playSound",
@@ -49,20 +50,22 @@ const App: React.FC = () => {
   getLocation();
 
   return (
-    <div className="App">
-      <Routes>
-        <Route path="/" element={<Navigate to="/onboard" />} />
-        <Route path="/chat" element={<Chatbot />} />
-        <Route path="/god" element={<GodMode />} />
-        <Route path="/onboard" element={<Onboarding />} />
-        <Route path="/begin" element={<Begin />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/info" element={<StoredInfo />} />
-        <Route path="/sos" element={<SOSTools />} />
-        <Route path="/alerts" element={<LiveAlerts />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </div>
+    <ThemeProvider>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<Navigate to="/onboard" />} />
+          <Route path="/chat" element={<Chatbot />} />
+          <Route path="/god" element={<GodMode />} />
+          <Route path="/onboard" element={<Onboarding />} />
+          <Route path="/begin" element={<Begin />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/info" element={<StoredInfo />} />
+          <Route path="/sos" element={<SOSTools />} />
+          <Route path="/alerts" element={<LiveAlerts />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+    </ThemeProvider>
   );
 };
 
