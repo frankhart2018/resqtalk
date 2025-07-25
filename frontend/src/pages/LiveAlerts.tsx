@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getActiveAlerts } from "../api/api";
 import Navbar from "../components/Navbar";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/useTheme";
 import "./LiveAlerts.css";
 import "../App.css"; // For chatbot class
 

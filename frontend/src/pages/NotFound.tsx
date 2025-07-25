@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/useTheme";
 import "./NotFound.css"; // We'll create this CSS file next
 
 const NotFound: React.FC = () => {

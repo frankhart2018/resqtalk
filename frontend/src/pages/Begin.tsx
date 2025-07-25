@@ -7,7 +7,7 @@ import {
 } from "../api/api";
 import type { GetDisastersResponse } from "../api/model";
 import Navbar from "../components/Navbar";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/useTheme";
 import "./Chatbot.css"; // For theme
 import "./Begin.css";
 

@@ -5,7 +5,7 @@ import type { OnboardingData } from "../api/model";
 import LocationMap from "../components/LocationMap";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/useTheme";
 
 interface PrimaryUserDetails {
   name: string;

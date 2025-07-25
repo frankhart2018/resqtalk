@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import "./Chatbot.css";
 import Navbar from "../components/Navbar";
 import ModeToggle from "../components/ModeToggle";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/useTheme";
 import { executeToolCall } from "../tools/tool-utils";
 import { register } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";

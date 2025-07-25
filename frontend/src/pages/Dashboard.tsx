@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import Navbar from "../components/Navbar";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/useTheme";
 import { deleteDisasterContext } from "../api/api.ts";
 
 const Dashboard: React.FC = () => {

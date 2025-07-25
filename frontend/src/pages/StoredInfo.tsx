@@ -5,7 +5,7 @@ import "./Chatbot.css";
 import "./Onboarding.css";
 import "./StoredInfo.css";
 import Navbar from "../components/Navbar";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/useTheme";
 
 const StoredInfo: React.FC = () => {
   const { theme } = useTheme();
