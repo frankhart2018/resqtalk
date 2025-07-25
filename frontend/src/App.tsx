@@ -8,6 +8,7 @@ import StoredInfo from "./pages/StoredInfo";
 import SOSTools from "./pages/SOSTools";
 import NotFound from "./pages/NotFound";
 import LiveAlerts from "./pages/LiveAlerts";
+import Maps from "./pages/Maps";
 import "./App.css";
 import { registerTool } from "./tools/tool-utils";
 import { playSound, stopSound } from "./tools/sound-tools";
@@ -59,6 +60,7 @@ const App: React.FC = () => {
           <Route path="/onboard" element={<Onboarding />} />
           <Route path="/begin" element={<Begin />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/maps" element={<Maps />} />
           <Route path="/info" element={<StoredInfo />} />
           <Route path="/sos" element={<SOSTools />} />
           <Route path="/alerts" element={<LiveAlerts />} />
