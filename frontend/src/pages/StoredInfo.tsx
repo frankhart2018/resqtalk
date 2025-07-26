@@ -38,7 +38,7 @@ const StoredInfo: React.FC = () => {
     <div className={`chatbot ${theme}`}>
       <Navbar pageTitle="Stored Info" />
       <div className="onboarding-container">
-        <>
+        
           {userDetails ? (
             <form>
               <h2>Primary User</h2>
@@ -169,25 +169,18 @@ const StoredInfo: React.FC = () => {
           <h2>Memories</h2>
           {memories && memories.memories.length > 0 ? (
             <ul className="memory-list">
-              {memories.memories.map((memoryGroup, groupIndex) =>
-                memoryGroup.map((memory, memoryIndex) => (
-                  <li
-                    key={`${groupIndex}-${memoryIndex}`}
-                    className="memory-item"
-                  >
-                    {Object.entries(memory).map(([key, value]) => (
-                      <div key={key}>
-                        <strong>{key}:</strong> {JSON.stringify(value)}
-                      </div>
-                    ))}
-                  </li>
-                ))
-              )}
+              {memories.memories.flat().map((memory, index) => (
+                <li key={index} className="memory-item">
+                  {Object.entries(memory)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join(", ")}
+                </li>
+              ))}
             </ul>
           ) : (
             <p>No memories found.</p>
           )}
-        </>
+        
       </div>
     </div>
   );
