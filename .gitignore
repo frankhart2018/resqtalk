@@ -7,4 +7,4 @@ node_modules/
 dist/
 .env
 langfuse_*/
-offline_map.db
+offline_map.db*

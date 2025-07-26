@@ -120,6 +120,22 @@ async def lifespan(app: FastAPI):
         f"API Server ready for requests, current processing mode: '{current_mode.name}', God Mode: {is_god_mode}"
     )
 
+    try:
+        map_store = MapStore()
+        is_map_downloaded = map_store.is_download_complete()
+        logger.info(f"Map download complete? {is_map_downloaded}")
+        if not is_map_downloaded:
+            logger.info("Restarting map download, as it is not complete.")
+            lat, lon = map_store.get_cached_lat_lon()
+            logger.info(f"Cached (lat, lon) = ({lat}, {lon})")
+            if (lat is not None and lon is not None) and (lat != 0.0 and lon != 0.0):
+                logger.info("Restart map downloader coroutine.")
+                asyncio.create_task(map_downloader(lat, lon))
+            else:
+                logger.info("No cached lat lon, giving up.")
+    except:
+        logger.info("Map cache store not created yet.")
+
     yield
 
     if memory_task and not memory_task.done():
@@ -361,15 +377,12 @@ def get_active_alerts(latitude: float, longitude: float):
 
 @app.get("/map/{z}/{x}/{y}.png")
 def get_map_tiles(z: int, x: int, y: int):
-    try:
-        map_store = MapStore()
-        tile_data = map_store.get_tile(x, y, z)
-        if tile_data is None:
-            raise ValueError("Tile not found")
-        return Response(tile_data, media_type="image/png")
-    except ValueError as ve:
-        logger.error(ve)
+    map_store = MapStore()
+    tile_data = map_store.get_tile(x, y, z)
+    if tile_data is None:
+        logger.error("Tile not found")
         raise HTTPException(status_code=404, detail="Tile not found")
+    return Response(tile_data, media_type="image/png")
 
 
 if __name__ == "__main__":
