@@ -77,6 +77,7 @@ export const getVoiceModeResponse = async (
 ): Promise<VoiceModeResponse> => {
   const formData = new FormData();
   formData.append("file", audioBlob, "recording.wav");
+  formData.append("frontendTools", getPromptWithTools());
 
   const response = await fetch(`${API_HOST}/generate/voice`, {
     method: "POST",

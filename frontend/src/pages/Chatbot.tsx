@@ -138,7 +138,6 @@ const Chatbot: React.FC = () => {
               }
             } catch (error) {
               console.error("Error processing tool call:", error);
-              replaceLastBotMessage(transcription); // fallback to showing raw response
             }
           }
         }
