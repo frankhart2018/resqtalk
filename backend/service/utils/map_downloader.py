@@ -156,6 +156,9 @@ class MapDownloader:
                         processed_tiles += await self.__gather_tasks(tasks)
 
                     logger.info(f"Completed zoom level {zoom}")
+
+            self.__map_store.mark_download_complete()
+
             return True
         except aiohttp.ClientError as e:
             logger.error(e)
