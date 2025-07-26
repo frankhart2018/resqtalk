@@ -15,23 +15,32 @@ class VoiceCommunicationAgent(VoiceAgentBase):
         self, state: MessagesState, config: RunnableConfig, *, store: BaseStore
     ):
         user_id = config["configurable"]["user_id"]
+        tools = config["configurable"]["tools"]
         namespace = ("memories", user_id)
-        memories = store.search(namespace, query=str(state["messages"][-1].content))
+        audio_path = state["messages"][-1].content
+        memories = store.search(namespace, query=str(audio_path))
 
         info = "\n".join([str(d.value) for d in memories])
 
         memory_attachment = (
             "Also here are the details about the user you are talking to:\n\n{info}"
         ).format(info=info)
-        system_msg = f"{SystemPromptStore().get_prompt(key=COMM_AGENT_SYS_PROMPT_KEY)}\n{memory_attachment}"
-        audio_path = state["messages"][-1].content
+
+        system_prompt = SystemPromptStore().get_prompt(key=COMM_AGENT_SYS_PROMPT_KEY)
+
+        tools_prompt = (
+            f"{tools}\n\nUser's voice recording is in the audio file below."
+        )
+
+        system_msg = f"{tools_prompt}\n\n{system_prompt}\n{memory_attachment}"
+
         messages = self.construct_model_messages(
             audio_path=audio_path, system_msg=system_msg
         )
 
         return {"messages": self.model.invoke(messages)}
 
-    def generate(self, user_voice_file: str):
+    def generate(self, user_voice_file: str, tools: str):
         with RedisStore.from_conn_string(REDIS_HOST) as store:
             store.setup()
 
@@ -46,7 +55,11 @@ class VoiceCommunicationAgent(VoiceAgentBase):
             graph = builder.compile(store=store)
 
             config = {
-                "configurable": {"thread_id": "1", "user_id": "1"},
+                "configurable": {
+                    "thread_id": "1",
+                    "user_id": "1",
+                    "tools": tools,
+                },
                 "callbacks": [langfuse_handler],
             }
 

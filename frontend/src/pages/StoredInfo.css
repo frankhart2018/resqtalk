@@ -10,3 +10,20 @@
   text-align: left;
   margin-bottom: 1rem;
 }
+
+.memory-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.memory-item {
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.dark .memory-item {
+  background-color: #333;
+  color: #fff;
+}

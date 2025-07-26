@@ -194,7 +194,7 @@ async def generate_aprompt(request: PromptRequest):
 
 
 @app.post("/generate/voice")
-async def voice_stream(file: UploadFile = File(...)):
+async def voice_stream(file: UploadFile = File(...), frontendTools: str = ""):
     if current_mode != Mode.VOICE:
         raise HTTPException(
             status_code=500,
@@ -206,7 +206,7 @@ async def voice_stream(file: UploadFile = File(...)):
     with open(filename, "wb") as f:
         f.write(contents)
 
-    output = voice_agent.generate(str(filename))
+    output = voice_agent.generate(str(filename), frontendTools)
     logger.info(f"Output from model: {output}")
 
     memory_queue.put_nowait(str(filename))
