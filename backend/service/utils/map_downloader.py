@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 class MapDownloader:
     def __init__(self):
         self.__map_store = MapStore(create_if_no_exists=True)
-        self.__map_store.setup_database()
 
         self.__tile_server = MAP_TILE_SERVER
 
@@ -85,6 +84,8 @@ class MapDownloader:
         processed_tiles = 0
         tile_info_per_zoom_level = {}
 
+        self.__map_store.update_lat_lon(center_lat, center_lon)
+
         for zoom in range(min_zoom, max_zoom + 1):
             x_min, y_min, x_max, y_max = self.__calculate_bounds(
                 center_lat, center_lon, radius_miles, zoom
@@ -103,7 +104,7 @@ class MapDownloader:
         logger.info(f"Zoom levels: {min_zoom} to {max_zoom}")
 
         headers = {"User-Agent": "OfflineMapDownloader/1.0"}
-        connector = aiohttp.TCPConnector(limit=5)
+        connector = aiohttp.TCPConnector(limit=500)
         timeout = aiohttp.ClientTimeout(total=60)
 
         try:
@@ -132,7 +133,7 @@ class MapDownloader:
 
                             tasks.append(self.__download_tile(session, zoom, x, y))
 
-                            if len(tasks) >= 50:
+                            if len(tasks) >= 500:
                                 processed_tiles += await self.__gather_tasks(tasks)
 
                                 tasks = []
