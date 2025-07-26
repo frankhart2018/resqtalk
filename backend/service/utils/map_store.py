@@ -37,7 +37,8 @@ class MapStore:
                 CREATE TABLE IF NOT EXISTS {self.__status_table} (
                     currentStatus INTEGER,
                     lat REAL,
-                    lon REAL
+                    lon REAL,
+                    downloadStatus REAL
                 )
             """
             )
@@ -51,8 +52,11 @@ class MapStore:
             count = cursor.fetchone()[0]
             if count == 0:
                 cursor.execute(
-                    f"INSERT OR REPLACE INTO {self.__status_table} (currentStatus, lat, lon) VALUES (?, ?, ?)",
-                    (0, 0.0, 0.0),
+                    f"""
+                    INSERT OR REPLACE INTO {self.__status_table} 
+                    (currentStatus, lat, lon, downloadStatus) VALUES (?, ?, ?, ?)
+                """,
+                    (0, 0.0, 0.0, 0.0),
                 )
                 conn.commit()
 
@@ -91,6 +95,14 @@ class MapStore:
             )
             conn.commit()
 
+    def update_download_status(self, download_status: float):
+        with sqlite3.connect(MAP_DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                f"UPDATE {self.__status_table} SET downloadStatus={download_status} WHERE currentStatus=0"
+            )
+            conn.commit()
+
     def get_cached_lat_lon(self) -> tuple[float, float] | tuple[None, None]:
         with sqlite3.connect(MAP_DB_NAME) as conn:
             cursor = conn.cursor()
@@ -102,6 +114,14 @@ class MapStore:
                 if result is not None and len(result) >= 3
                 else (None, None)
             )
+
+    def get_download_status(self) -> float:
+        with sqlite3.connect(MAP_DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT * FROM {self.__status_table}")
+            result = cursor.fetchone()
+
+            return result[3] if result is not None and len(result) >= 4 else 0.0
 
     def is_download_complete(self) -> bool:
         with sqlite3.connect(MAP_DB_NAME) as conn:

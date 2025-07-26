@@ -385,6 +385,13 @@ def get_map_tiles(z: int, x: int, y: int):
     return Response(tile_data, media_type="image/png")
 
 
+@app.get("/map/download-status")
+def get_map_download_status():
+    map_store = MapStore()
+
+    return {"downloadStatus": map_store.get_download_status()}
+
+
 if __name__ == "__main__":
     import uvicorn
 

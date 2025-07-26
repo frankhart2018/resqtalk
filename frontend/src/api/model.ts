@@ -57,3 +57,7 @@ export interface DisasterContext {
   disaster: string;
   phase: string;
 }
+
+export interface GetMapDownloadStatus {
+  downloadStatus: number;
+}
