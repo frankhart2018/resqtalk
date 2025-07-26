@@ -136,6 +136,11 @@ class MapDownloader:
                             if len(tasks) >= 500:
                                 processed_tiles += await self.__gather_tasks(tasks)
 
+                                download_status = round(
+                                    processed_tiles / total_tiles * 100, 1
+                                )
+                                self.__map_store.update_download_status(download_status)
+
                                 tasks = []
 
                                 await asyncio.sleep(0.5)
@@ -149,11 +154,13 @@ class MapDownloader:
                                     )
 
                                 logger.info(
-                                    f"Progress: {processed_tiles}/{total_tiles} ({processed_tiles/total_tiles*100:.1f}%)"
+                                    f"Progress: {processed_tiles}/{total_tiles} ({download_status}%)"
                                 )
 
                     if tasks:
                         processed_tiles += await self.__gather_tasks(tasks)
+                        download_status = round(processed_tiles / total_tiles * 100, 1)
+                        self.__map_store.update_download_status(download_status)
 
                     logger.info(f"Completed zoom level {zoom}")
 

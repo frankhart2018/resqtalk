@@ -10,6 +10,7 @@ import type {
   OnboardingData,
   VoiceModeResponse,
   DisasterContext,
+  GetMapDownloadStatus,
 } from "./model";
 import type { OptionalReadableBytesBuffer } from "./types";
 
@@ -293,4 +294,19 @@ export const deleteDisasterContext = async () => {
   }
 
   return response.json();
+};
+
+export const getMapDownloadStatus = async (): Promise<GetMapDownloadStatus> => {
+  return await fetch(`${API_HOST}/map/download-status`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...getCfAuthHeaders(),
+    },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+  });
 };
