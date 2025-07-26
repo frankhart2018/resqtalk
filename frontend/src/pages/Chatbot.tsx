@@ -14,9 +14,7 @@ import {
   getVoiceModeResponse,
   switchMode,
 } from "../api/api";
-import type {
-  GetCurrentModeResponse,
-} from "../api/model";
+import type { GetCurrentModeResponse } from "../api/model";
 import {
   startRecordingAudio,
   stopRecordingAudio,
@@ -101,6 +99,28 @@ const Chatbot: React.FC = () => {
   /////////////////////////////////////////////////////////////////
   // MODEL CALLING HELPERS
   /////////////////////////////////////////////////////////////////
+  const processMessageForToolCalls = (replyData: string) => {
+    if (replyData.trim().startsWith("{") && replyData.trim().endsWith("}")) {
+      try {
+        const [toolCallResult, toolName] = processToolCallMessages(replyData);
+        console.log(`Tool call result: ${toolCallResult}`);
+        if (toolCallResult !== null) {
+          if (toolCallResult !== "") {
+            replaceLastBotMessage(toolCallResult);
+          } else {
+            replaceLastBotMessage(`Ok, executing tool: ${toolName}`);
+          }
+        } else {
+          replaceLastBotMessage(`Failed to execute tool: ${toolName}`);
+        }
+      } catch (error) {
+        console.error("Error processing tool call:", error);
+        // If JSON parsing fails, just display the raw reply.
+        replaceLastBotMessage(replyData);
+      }
+    }
+  };
+
   const handleToggleRecording = async () => {
     if (isRecording) {
       setIsRecording(false);
@@ -115,32 +135,8 @@ const Chatbot: React.FC = () => {
         });
 
         const transcription = (await getVoiceModeResponse(audioBlob)).response;
-
-        if (transcription && transcription.trim()) {
-          appendBotMessage(transcription);
-          if (
-            transcription.trim().startsWith("{") &&
-            transcription.trim().endsWith("}")
-          ) {
-            try {
-              const [toolCallResult, toolName] = processToolCallMessages(
-                transcription
-              );
-              console.log(`Tool call result: ${toolCallResult}`);
-              if (toolCallResult !== null) {
-                if (toolCallResult !== "") {
-                  replaceLastBotMessage(toolCallResult);
-                } else {
-                  replaceLastBotMessage(`Ok, executing tool: ${toolName}`);
-                }
-              } else {
-                replaceLastBotMessage(`Failed to execute tool: ${toolName}`);
-              }
-            } catch (error) {
-              console.error("Error processing tool call:", error);
-            }
-          }
-        }
+        appendBotMessage(transcription);
+        processMessageForToolCalls(transcription);
       } catch (error) {
         console.error("Error processing audio:", error);
         appendBotMessage("Error: Could not process audio recording.");
@@ -198,26 +194,7 @@ const Chatbot: React.FC = () => {
       setIsLoading(true);
       try {
         const replyData = await streamPromptResponse(inputValue);
-        // Check if the response is likely a JSON object for a tool call
-        if (replyData.trim().startsWith('{') && replyData.trim().endsWith('}')) {
-          try {
-            const [toolCallResult, toolName] = processToolCallMessages(replyData);
-            console.log(`Tool call result: ${toolCallResult}`);
-            if (toolCallResult !== null) {
-              if (toolCallResult !== "") {
-                replaceLastBotMessage(toolCallResult);
-              } else {
-                replaceLastBotMessage(`Ok, executing tool: ${toolName}`);
-              }
-            } else {
-              replaceLastBotMessage(`Failed to execute tool: ${toolName}`);
-            }
-          } catch (error) {
-            console.error("Error processing tool call:", error);
-            // If JSON parsing fails, just display the raw reply.
-            replaceLastBotMessage(replyData);
-          }
-        }
+        processMessageForToolCalls(replyData);
         // If it's not a tool call, the message is already displayed by streamPromptResponse.
       } catch (error) {
         console.error("Error sending message:", error);
