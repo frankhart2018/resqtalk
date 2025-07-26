@@ -31,7 +31,7 @@ class VoiceCommunicationAgent(VoiceAgentBase):
 
         return {"messages": self.model.invoke(messages)}
 
-    def generate(self, user_voice_file: str):
+    def generate(self, user_voice_file: str, tools: str):
         with RedisStore.from_conn_string(REDIS_HOST) as store:
             store.setup()
 
@@ -51,6 +51,14 @@ class VoiceCommunicationAgent(VoiceAgentBase):
             }
 
             return graph.invoke(
-                {"messages": [{"role": "user", "content": user_voice_file}]},
+                {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": f"{tools}\n\nUser's voice recording is in the audio file below.",
+                        },
+                        {"role": "user", "content": user_voice_file},
+                    ]
+                },
                 config,
             )["messages"][-1].content

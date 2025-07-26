@@ -118,6 +118,29 @@ const Chatbot: React.FC = () => {
 
         if (transcription && transcription.trim()) {
           appendBotMessage(transcription);
+          if (
+            transcription.trim().startsWith("{") &&
+            transcription.trim().endsWith("}")
+          ) {
+            try {
+              const [toolCallResult, toolName] = processToolCallMessages(
+                transcription
+              );
+              console.log(`Tool call result: ${toolCallResult}`);
+              if (toolCallResult !== null) {
+                if (toolCallResult !== "") {
+                  replaceLastBotMessage(toolCallResult);
+                } else {
+                  replaceLastBotMessage(`Ok, executing tool: ${toolName}`);
+                }
+              } else {
+                replaceLastBotMessage(`Failed to execute tool: ${toolName}`);
+              }
+            } catch (error) {
+              console.error("Error processing tool call:", error);
+              replaceLastBotMessage(transcription); // fallback to showing raw response
+            }
+          }
         }
       } catch (error) {
         console.error("Error processing audio:", error);
@@ -135,6 +158,7 @@ const Chatbot: React.FC = () => {
     let replyData = "";
     try {
       const reader = await getTextModeResponse(prompt);
+      console.log("Response reader:", reader);
       if (!reader) {
         throw new Error("No reader available");
       }
@@ -151,6 +175,7 @@ const Chatbot: React.FC = () => {
     } catch (error: unknown) {
       console.error("Error:", error);
     }
+    console.log("Final reply data:", replyData);
     return replyData;
   };
 
@@ -174,20 +199,27 @@ const Chatbot: React.FC = () => {
       setIsLoading(true);
       try {
         const replyData = await streamPromptResponse(inputValue);
-        try {
-          const [toolCallResult, toolName] = processToolCallMessages(replyData);
-          if (toolCallResult !== null) {
-            if (toolCallResult !== "") {
-              replaceLastBotMessage(toolCallResult);
+        // Check if the response is likely a JSON object for a tool call
+        if (replyData.trim().startsWith('{') && replyData.trim().endsWith('}')) {
+          try {
+            const [toolCallResult, toolName] = processToolCallMessages(replyData);
+            console.log(`Tool call result: ${toolCallResult}`);
+            if (toolCallResult !== null) {
+              if (toolCallResult !== "") {
+                replaceLastBotMessage(toolCallResult);
+              } else {
+                replaceLastBotMessage(`Ok, executing tool: ${toolName}`);
+              }
             } else {
-              replaceLastBotMessage(`Ok, executing tool: ${toolName}`);
+              replaceLastBotMessage(`Failed to execute tool: ${toolName}`);
             }
-          } else {
-            throw new Error("Failed tool call!");
+          } catch (error) {
+            console.error("Error processing tool call:", error);
+            // If JSON parsing fails, just display the raw reply.
+            replaceLastBotMessage(replyData);
           }
-        } catch (error) {
-          console.log(error);
         }
+        // If it's not a tool call, the message is already displayed by streamPromptResponse.
       } catch (error) {
         console.error("Error sending message:", error);
         replaceLastBotMessage("Error: Could not get a response from the bot.");
