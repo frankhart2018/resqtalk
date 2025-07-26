@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { getUserDetails } from "../api/api";
-import type { GetUserDetailsResponse } from "../api/model";
+import { getUserDetails, getMemories } from "../api/api";
+import type { GetUserDetailsResponse, GetMemoriesResponse } from "../api/model";
 import "./Chatbot.css";
 import "./Onboarding.css";
 import "./StoredInfo.css";
@@ -12,6 +12,7 @@ const StoredInfo: React.FC = () => {
   const [userDetails, setUserDetails] = useState<GetUserDetailsResponse | null>(
     null
   );
+  const [memories, setMemories] = useState<GetMemoriesResponse | null>(null);
 
   useEffect(() => {
     getUserDetails()
@@ -22,6 +23,15 @@ const StoredInfo: React.FC = () => {
         console.error("Error fetching user details:", error);
         setUserDetails(null);
       });
+
+    getMemories()
+      .then((data: GetMemoriesResponse) => {
+        setMemories(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching memories:", error);
+        setMemories(null);
+      });
   }, []);
 
   return (
@@ -29,7 +39,7 @@ const StoredInfo: React.FC = () => {
       <Navbar pageTitle="Stored Info" />
       <div className="onboarding-container">
         <>
-          {userDetails && (
+          {userDetails ? (
             <form>
               <h2>Primary User</h2>
               <label>Name:</label>
@@ -152,8 +162,31 @@ const StoredInfo: React.FC = () => {
                   </div>
                 )}
             </form>
+          ) : (
+            <p>Loading user details or no user data found.</p>
           )}
-          {!userDetails && <p>Loading user details or no user data found.</p>}
+
+          <h2>Memories</h2>
+          {memories && memories.memories.length > 0 ? (
+            <ul className="memory-list">
+              {memories.memories.map((memoryGroup, groupIndex) =>
+                memoryGroup.map((memory, memoryIndex) => (
+                  <li
+                    key={`${groupIndex}-${memoryIndex}`}
+                    className="memory-item"
+                  >
+                    {Object.entries(memory).map(([key, value]) => (
+                      <div key={key}>
+                        <strong>{key}:</strong> {JSON.stringify(value)}
+                      </div>
+                    ))}
+                  </li>
+                ))
+              )}
+            </ul>
+          ) : (
+            <p>No memories found.</p>
+          )}
         </>
       </div>
     </div>
