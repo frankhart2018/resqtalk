@@ -17,6 +17,7 @@ from service.data_models.onboarding import (
     OnboardingRequest,
 )
 from service.model.ollama_client import LangchainOllamaGemmaClient
+from service.utils.checklist_store import ChecklistStore
 
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ class ChecklistBuilderAgent:
         self.max_iterations = 3
 
         self.llm = LangchainOllamaGemmaClient().model
+        self.checklist_store = ChecklistStore()
 
         self.graph = self.__create_graph()
 
@@ -226,4 +228,13 @@ class ChecklistBuilderAgent:
             initial_state, config={"callbacks": [langfuse_handler]}
         )
 
-        return final_state["final_checklist"]
+        final_checklist = final_state["final_checklist"]
+        if final_checklist:
+            self.checklist_store.save_checklist(
+                user_id=user_details.primaryUserDetails.userId,
+                disaster_type=user_details.selectedDisasters[0].name,
+                phase=phase,
+                checklist=final_checklist,
+            )
+
+        return final_checklist
