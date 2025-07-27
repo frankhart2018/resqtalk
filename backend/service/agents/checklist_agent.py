@@ -231,8 +231,7 @@ class ChecklistBuilderAgent:
         final_checklist = final_state["final_checklist"]
         if final_checklist:
             self.checklist_store.save_checklist(
-                user_id=user_details.primaryUserDetails.userId,
-                disaster_type=user_details.selectedDisasters[0].name,
+                disaster_type=user_details.selectedDisasters[0].value,
                 phase=phase,
                 checklist=final_checklist,
             )

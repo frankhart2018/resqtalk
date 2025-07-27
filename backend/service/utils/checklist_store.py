@@ -15,20 +15,13 @@ class ChecklistStore:
         self.__db = client[MONGO_DB_NAME]
         self.__collection = self.__db[MONGO_COLLECTION_NAME]
 
-    def save_checklist(self, user_id: str, disaster_type: str, phase: str, checklist: List[str]):
+    def save_checklist(self, disaster_type: str, phase: str, checklist: List[str]):
         document = {
-            "user_id": user_id,
             "disaster_type": disaster_type,
             "phase": phase,
             "checklist": checklist,
         }
         self.__collection.insert_one(document)
 
-    def get_checklist(self, user_id: str, disaster_type: str, phase: str):
-        return self.__collection.find_one(
-            {
-                "user_id": user_id,
-                "disaster_type": disaster_type,
-                "phase": phase,
-            }
-        )
+    def get_checklists(self):
+        return self.__collection.find({})
