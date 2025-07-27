@@ -25,3 +25,6 @@ class ChecklistStore:
 
     def get_checklists(self):
         return self.__collection.find({})
+
+    def delete_cache(self):
+        self.__collection.delete_many({})

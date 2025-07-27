@@ -36,6 +36,7 @@ from service.utils.constants import (
 from service.utils.prompt_store import SystemPromptStore
 from service.utils.user_info_store import UserInfoStore
 from service.utils.memory_store import MemoryStore
+from service.utils.checklist_store import ChecklistStore
 from service.utils.nws_api import NWSApiFacade
 from service.utils.map_store import MapStore
 from service.utils.map_downloader import MapDownloader
@@ -115,7 +116,7 @@ async def checklist_builder(user_details: OnboardingRequest):
             logging.info(
                 f"Building checklist for disaster '{disaster}' and phase '{phase}'"
             )
-            checklist_builder_agent.build_checklist(
+            await checklist_builder_agent.build_checklist(
                 user_details=user_details, phase=phase, disaster=disaster
             )
 
@@ -338,6 +339,8 @@ async def onboard_device(onboarding_request: OnboardingRequest):
 def delete_user():
     _check_god_mode()
     UserInfoStore().delete_user()
+    MapStore(create_if_no_exists=True).delete_cache()
+    ChecklistStore().delete_cache()
     return {"status": "ok"}
 
 
@@ -405,9 +408,12 @@ def get_map_tiles(z: int, x: int, y: int):
 
 @app.get("/map/download-status")
 def get_map_download_status():
-    map_store = MapStore()
+    try:
+        map_store = MapStore()
 
-    return {"downloadStatus": map_store.get_download_status()}
+        return {"downloadStatus": map_store.get_download_status()}
+    except ValueError:
+        return {"downloadStatus": 0}
 
 
 if __name__ == "__main__":
