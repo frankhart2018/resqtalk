@@ -61,7 +61,7 @@ memory_queue: Optional[asyncio.Queue] = None
 comm_agent: Optional[CommunicationAgent] = None
 voice_agent: Optional[VoiceCommunicationAgent] = None
 voice_memory_agent: Optional[VoiceMemoryAgent] = None
-map_downloader_task: Optional[asyncio.Task] = None
+onboarding_task: Optional[asyncio.Task] = None
 current_mode: Mode = Mode.TEXT
 disaster_context: Optional[DisasterContextRequest] = None
 
@@ -146,10 +146,10 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
-    if map_downloader_task and not map_downloader_task.done():
-        map_downloader_task.cancel()
+    if onboarding_task and not onboarding_task.done():
+        onboarding_task.cancel()
         try:
-            await map_downloader_task
+            await onboarding_task
         except asyncio.CancelledError:
             pass
 
@@ -314,20 +314,24 @@ async def checklist_builder_coroutine(user_details: OnboardingRequest):
             )
 
 
+async def onboarding_tasks_coroutine(onboarding_request: OnboardingRequest):
+    await checklist_builder_coroutine(onboarding_request)
+    await map_downloader(
+        lat=onboarding_request.location.latitude,
+        lon=onboarding_request.location.longitude,
+    )
+
+
 @app.post("/onboarding")
 async def onboard_device(onboarding_request: OnboardingRequest):
     user_info_store = UserInfoStore()
     if user_info_store.find_singular_user():
         return {"status": OnboardingResponse.ALREADY_REGISTERED}
 
-    global map_downloader_task
+    global onboarding_task
     user_info_store.onboard_user(onboarding_request)
-    asyncio.create_task(checklist_builder_coroutine(onboarding_request))
-    map_downloader_task = asyncio.create_task(
-        map_downloader(
-            lat=onboarding_request.location.latitude,
-            lon=onboarding_request.location.longitude,
-        )
+    onboarding_task = asyncio.create_task(
+        onboarding_tasks_coroutine(onboarding_request)
     )
     return {"status": OnboardingResponse.OK}
 
