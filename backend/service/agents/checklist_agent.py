@@ -14,19 +14,14 @@ from service.data_models.onboarding import (
     PrimaryMember,
     DependentMember,
     Disaster,
-    Gender,
     OnboardingRequest,
+    Phase,
 )
 from service.model.ollama_client import LangchainOllamaGemmaClient
 from service.utils.checklist_store import ChecklistStore
 
 
 logger = logging.getLogger(__name__)
-
-
-class Phase(Enum):
-    PRE = "pre"
-    POST = "post"
 
 
 class UserInfo(BaseModel):
