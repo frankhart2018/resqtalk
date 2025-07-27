@@ -202,7 +202,9 @@ class ChecklistBuilderAgent:
 
         return {**state, "final_checklist": final_checklist}
 
-    def build_checklist(self, user_details: OnboardingRequest, phase: str):
+    def build_checklist(
+        self, user_details: OnboardingRequest, phase: str, disaster: Disaster
+    ):
         user_info = UserInfo(
             primary_user=user_details.primaryUserDetails,
             dependents=user_details.dependentUserDetails,
@@ -214,7 +216,7 @@ class ChecklistBuilderAgent:
             "messages": [],
             "user_info": user_info,
             "phase": phase_enumed,
-            "disaster": user_details.selectedDisasters[0],
+            "disaster": disaster,
             "search_queries": [],
             "search_results": [],
             "iterations": 0,
@@ -231,7 +233,7 @@ class ChecklistBuilderAgent:
         final_checklist = final_state["final_checklist"]
         if final_checklist:
             self.checklist_store.save_checklist(
-                disaster_type=user_details.selectedDisasters[0].value,
+                disaster_type=disaster.value,
                 phase=phase,
                 checklist=final_checklist,
             )

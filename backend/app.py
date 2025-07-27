@@ -300,6 +300,20 @@ def get_memories():
     return {"memories": MemoryStore().list_memory()}
 
 
+async def checklist_builder_coroutine(user_details: OnboardingRequest):
+    checklist_builder_agent = ChecklistBuilderAgent()
+    disasters = user_details.selectedDisasters
+    phases = ["pre", "post"]
+    for disaster in disasters:
+        for phase in phases:
+            logging.info(
+                f"Building checklist for disaster '{disaster}' and phase '{phase}'"
+            )
+            checklist_builder_agent.build_checklist(
+                user_details=user_details, phase=phase, disaster=disaster
+            )
+
+
 @app.post("/onboarding")
 async def onboard_device(onboarding_request: OnboardingRequest):
     user_info_store = UserInfoStore()
@@ -308,6 +322,7 @@ async def onboard_device(onboarding_request: OnboardingRequest):
 
     global map_downloader_task
     user_info_store.onboard_user(onboarding_request)
+    asyncio.create_task(checklist_builder_coroutine(onboarding_request))
     map_downloader_task = asyncio.create_task(
         map_downloader(
             lat=onboarding_request.location.latitude,
@@ -391,15 +406,6 @@ def get_map_download_status():
     map_store = MapStore()
 
     return {"downloadStatus": map_store.get_download_status()}
-
-
-@app.post("/build-checklist")
-def build_checklist(phase: str):
-    user_info_store = UserInfoStore()
-    user_details = user_info_store.get_user_document()
-    del user_details["_id"]
-    user_details = OnboardingRequest(**user_details)
-    return ChecklistBuilderAgent().build_checklist(user_details, phase)
 
 
 if __name__ == "__main__":
