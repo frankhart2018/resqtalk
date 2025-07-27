@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "accelerate>=1.8.1",
     "aiohttp>=3.12.14",
+    "ddgs>=9.4.3",
     "dotenv>=0.9.9",
     "fastapi>=0.115.14",
     "langchain>=0.3.26",

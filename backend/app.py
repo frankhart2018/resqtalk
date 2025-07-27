@@ -39,6 +39,7 @@ from service.utils.memory_store import MemoryStore
 from service.utils.nws_api import NWSApiFacade
 from service.utils.map_store import MapStore
 from service.utils.map_downloader import MapDownloader
+from service.agents.checklist_agent import ChecklistBuilderAgent
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -390,6 +391,15 @@ def get_map_download_status():
     map_store = MapStore()
 
     return {"downloadStatus": map_store.get_download_status()}
+
+
+@app.post("/build-checklist")
+def build_checklist(phase: str):
+    user_info_store = UserInfoStore()
+    user_details = user_info_store.get_user_document()
+    del user_details["_id"]
+    user_details = OnboardingRequest(**user_details)
+    return ChecklistBuilderAgent().build_checklist(user_details, phase)
 
 
 if __name__ == "__main__":
