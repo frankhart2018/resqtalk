@@ -9,6 +9,7 @@ import SOSTools from "./pages/SOSTools";
 import NotFound from "./pages/NotFound";
 import LiveAlerts from "./pages/LiveAlerts";
 import Maps from "./pages/Maps";
+import { Checklist } from "./pages/Checklist";
 import "./App.css";
 import { registerTool } from "./tools/tool-utils";
 import { playSound, stopSound } from "./tools/sound-tools";
@@ -64,6 +65,7 @@ const App: React.FC = () => {
           <Route path="/info" element={<StoredInfo />} />
           <Route path="/sos" element={<SOSTools />} />
           <Route path="/alerts" element={<LiveAlerts />} />
+          <Route path="/checklist" element={<Checklist />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

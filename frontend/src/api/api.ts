@@ -11,6 +11,7 @@ import type {
   VoiceModeResponse,
   DisasterContext,
   GetMapDownloadStatus,
+  GetChecklistResponse,
 } from "./model";
 import type { OptionalReadableBytesBuffer } from "./types";
 
@@ -22,6 +23,21 @@ const getCfAuthHeaders = (): object => {
     "CF-Access-Client-Id": import.meta.env.VITE_CF_CLIENT_ID || "",
     "CF-Access-Client-Secret": import.meta.env.VITE_CF_CLIENT_SECRET || "",
   };
+};
+
+export const getCurrentChecklist = async (): Promise<GetChecklistResponse> => {
+  return fetch(`${API_HOST}/current-checklist`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...getCfAuthHeaders(),
+    },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+  });
 };
 
 export const submitOnboarding = async (data: OnboardingData) => {
@@ -79,14 +95,17 @@ export const getVoiceModeResponse = async (
   const formData = new FormData();
   formData.append("file", audioBlob, "recording.wav");
 
-  const response = await fetch(`${API_HOST}/generate/voice?frontendTools=${getPromptWithTools()}`, {
-    method: "POST",
-    body: formData,
-    headers: {
-      Accept: "application/json",
-      ...getCfAuthHeaders(),
-    },
-  });
+  const response = await fetch(
+    `${API_HOST}/generate/voice?frontendTools=${getPromptWithTools()}`,
+    {
+      method: "POST",
+      body: formData,
+      headers: {
+        Accept: "application/json",
+        ...getCfAuthHeaders(),
+      },
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);

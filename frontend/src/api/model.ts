@@ -61,3 +61,7 @@ export interface DisasterContext {
 export interface GetMapDownloadStatus {
   downloadStatus: number;
 }
+
+export interface GetChecklistResponse {
+  checklist: string[];
+}
