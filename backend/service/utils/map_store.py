@@ -5,7 +5,6 @@ from service.utils.singleton import singleton
 from service.utils.constants import MAP_DB_NAME
 
 
-@singleton
 class MapStore:
     def __init__(self, create_if_no_exists: bool = False):
         if not os.path.exists(MAP_DB_NAME) and not create_if_no_exists:
@@ -15,7 +14,6 @@ class MapStore:
         self.__status_table = "status"
 
         self.__setup_database()
-        self.__init_status()
 
     def __setup_database(self):
         with sqlite3.connect(MAP_DB_NAME) as conn:
@@ -43,10 +41,6 @@ class MapStore:
             """
             )
 
-            conn.commit()
-
-    def __init_status(self):
-        with sqlite3.connect(MAP_DB_NAME) as conn:
             cursor = conn.cursor()
             cursor.execute(f"SELECT COUNT(*) FROM {self.__status_table}")
             count = cursor.fetchone()[0]
@@ -58,7 +52,11 @@ class MapStore:
                 """,
                     (0, 0.0, 0.0, 0.0),
                 )
-                conn.commit()
+
+            conn.commit()
+
+    def delete_cache(self):
+        os.remove(MAP_DB_NAME)
 
     def get_tile(self, x: int, y: int, z: int):
         with sqlite3.connect(MAP_DB_NAME) as conn:

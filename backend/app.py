@@ -36,6 +36,7 @@ from service.utils.constants import (
 from service.utils.prompt_store import SystemPromptStore
 from service.utils.user_info_store import UserInfoStore
 from service.utils.memory_store import MemoryStore
+from service.utils.checklist_store import ChecklistStore
 from service.utils.nws_api import NWSApiFacade
 from service.utils.map_store import MapStore
 from service.utils.map_downloader import MapDownloader
@@ -61,7 +62,7 @@ memory_queue: Optional[asyncio.Queue] = None
 comm_agent: Optional[CommunicationAgent] = None
 voice_agent: Optional[VoiceCommunicationAgent] = None
 voice_memory_agent: Optional[VoiceMemoryAgent] = None
-map_downloader_task: Optional[asyncio.Task] = None
+onboarding_task: Optional[asyncio.Task] = None
 current_mode: Mode = Mode.TEXT
 disaster_context: Optional[DisasterContextRequest] = None
 
@@ -106,6 +107,28 @@ async def map_downloader(lat: float, lon: float):
             asyncio.sleep(WAIT_BETWEEN_RETRIES)
 
 
+async def checklist_builder(user_details: OnboardingRequest):
+    checklist_builder_agent = ChecklistBuilderAgent()
+    disasters = user_details.selectedDisasters
+    phases = ["pre", "post"]
+    for disaster in disasters:
+        for phase in phases:
+            logging.info(
+                f"Building checklist for disaster '{disaster}' and phase '{phase}'"
+            )
+            await checklist_builder_agent.build_checklist(
+                user_details=user_details, phase=phase, disaster=disaster
+            )
+
+
+async def onboarding_tasks(onboarding_request: OnboardingRequest):
+    await checklist_builder(onboarding_request)
+    await map_downloader(
+        lat=onboarding_request.location.latitude,
+        lon=onboarding_request.location.longitude,
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialization
@@ -146,10 +169,10 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
-    if map_downloader_task and not map_downloader_task.done():
-        map_downloader_task.cancel()
+    if onboarding_task and not onboarding_task.done():
+        onboarding_task.cancel()
         try:
-            await map_downloader_task
+            await onboarding_task
         except asyncio.CancelledError:
             pass
 
@@ -306,14 +329,9 @@ async def onboard_device(onboarding_request: OnboardingRequest):
     if user_info_store.find_singular_user():
         return {"status": OnboardingResponse.ALREADY_REGISTERED}
 
-    global map_downloader_task
+    global onboarding_task
     user_info_store.onboard_user(onboarding_request)
-    map_downloader_task = asyncio.create_task(
-        map_downloader(
-            lat=onboarding_request.location.latitude,
-            lon=onboarding_request.location.longitude,
-        )
-    )
+    onboarding_task = asyncio.create_task(onboarding_tasks(onboarding_request))
     return {"status": OnboardingResponse.OK}
 
 
@@ -321,6 +339,8 @@ async def onboard_device(onboarding_request: OnboardingRequest):
 def delete_user():
     _check_god_mode()
     UserInfoStore().delete_user()
+    MapStore(create_if_no_exists=True).delete_cache()
+    ChecklistStore().delete_cache()
     return {"status": "ok"}
 
 
@@ -388,18 +408,12 @@ def get_map_tiles(z: int, x: int, y: int):
 
 @app.get("/map/download-status")
 def get_map_download_status():
-    map_store = MapStore()
+    try:
+        map_store = MapStore()
 
-    return {"downloadStatus": map_store.get_download_status()}
-
-
-@app.post("/build-checklist")
-def build_checklist(phase: str):
-    user_info_store = UserInfoStore()
-    user_details = user_info_store.get_user_document()
-    del user_details["_id"]
-    user_details = OnboardingRequest(**user_details)
-    return ChecklistBuilderAgent().build_checklist(user_details, phase)
+        return {"downloadStatus": map_store.get_download_status()}
+    except ValueError:
+        return {"downloadStatus": 0}
 
 
 if __name__ == "__main__":

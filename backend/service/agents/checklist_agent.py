@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from enum import Enum
 import json
 import logging
+import asyncio
 from ddgs import DDGS
 
 from service.data_models.onboarding import (
@@ -48,10 +49,8 @@ class ChecklistAgentState(TypedDict):
 class ChecklistBuilderAgent:
     def __init__(self):
         self.max_iterations = 3
-
         self.llm = LangchainOllamaGemmaClient().model
         self.checklist_store = ChecklistStore()
-
         self.graph = self.__create_graph()
 
     def __create_graph(self):
@@ -72,7 +71,9 @@ class ChecklistBuilderAgent:
 
         return builder.compile()
 
-    def __orchestrator_node(self, state: ChecklistAgentState) -> ChecklistAgentState:
+    async def __orchestrator_node(
+        self, state: ChecklistAgentState
+    ) -> ChecklistAgentState:
         stage_info = ""
         if state["phase"] == Phase.PRE:
             stage_info = "They are preparing for an approaching "
@@ -114,13 +115,13 @@ class ChecklistBuilderAgent:
 
         messages = state["messages"] + [{"role": "system", "content": system_prompt}]
 
-        response = self.llm.invoke(messages)
+        response = await self.llm.ainvoke(messages)
 
         messages.append(AIMessage(content=response.content))
 
         return {**state, "messages": messages}
 
-    def __search_node(self, state: ChecklistAgentState) -> ChecklistAgentState:
+    async def __search_node(self, state: ChecklistAgentState) -> ChecklistAgentState:
         last_message = state["messages"][-1].content
 
         if "{" in last_message and "}" in last_message:
@@ -134,16 +135,17 @@ class ChecklistBuilderAgent:
                 action = operation.get("action", None)
                 query = operation.get("query", None)
                 checklist = operation.get("checklist", None)
+
                 if action is not None and query is not None:
                     logger.info(
                         f"Found search action, performing web search for query: '{query}'"
                     )
-                    with DDGS() as ddgs:
-                        search_results = list(ddgs.text(query, max_results=5))
+
+                    search_results = await self._perform_web_search_async(query)
 
                     search_results_formatted = "\n".join(
                         [
-                            f"Title:{result.get("title", "")}\nSnippet:{result.get("body", "")}\nLink:{result.get("href", "")}\n"
+                            f"Title:{result.get('title', '')}\nSnippet:{result.get('body', '')}\nLink:{result.get('href', '')}\n"
                             for result in search_results
                         ]
                     )
@@ -166,6 +168,14 @@ class ChecklistBuilderAgent:
                 logger.error(f"Failed to parse JSON: {only_json_message}")
 
         return {**state, "iterations": state.get("iterations", 0) + 1}
+
+    async def _perform_web_search_async(self, query: str) -> list:
+        def _sync_search():
+            with DDGS() as ddgs:
+                return list(ddgs.text(query, max_results=5))
+
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, _sync_search)
 
     def __should_continue(self, state: ChecklistAgentState) -> str:
         if state["iterations"] >= state["max_iterations"]:
@@ -202,7 +212,9 @@ class ChecklistBuilderAgent:
 
         return {**state, "final_checklist": final_checklist}
 
-    def build_checklist(self, user_details: OnboardingRequest, phase: str):
+    async def build_checklist(
+        self, user_details: OnboardingRequest, phase: str, disaster: Disaster
+    ):
         user_info = UserInfo(
             primary_user=user_details.primaryUserDetails,
             dependents=user_details.dependentUserDetails,
@@ -214,7 +226,7 @@ class ChecklistBuilderAgent:
             "messages": [],
             "user_info": user_info,
             "phase": phase_enumed,
-            "disaster": user_details.selectedDisasters[0],
+            "disaster": disaster,
             "search_queries": [],
             "search_results": [],
             "iterations": 0,
@@ -224,16 +236,24 @@ class ChecklistBuilderAgent:
 
         langfuse_handler = CallbackHandler()
 
-        final_state = self.graph.invoke(
+        final_state = await self.graph.ainvoke(
             initial_state, config={"callbacks": [langfuse_handler]}
         )
 
         final_checklist = final_state["final_checklist"]
         if final_checklist:
-            self.checklist_store.save_checklist(
-                disaster_type=user_details.selectedDisasters[0].value,
-                phase=phase,
-                checklist=final_checklist,
-            )
+            await self._save_checklist_async(disaster.value, phase, final_checklist)
 
         return final_checklist
+
+    async def _save_checklist_async(
+        self, disaster_type: str, phase: str, checklist: list
+    ):
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None,
+            self.checklist_store.save_checklist,
+            disaster_type,
+            phase,
+            checklist,
+        )
