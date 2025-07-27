@@ -40,3 +40,8 @@ class OnboardingRequest(BaseModel):
 class OnboardingResponse(Enum):
     OK = "ok"
     ALREADY_REGISTERED = "already_registered"
+
+
+class Phase(Enum):
+    PRE = "pre"
+    POST = "post"

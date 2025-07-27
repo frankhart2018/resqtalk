@@ -23,7 +23,12 @@ from service.agents import (
 )
 from service.data_models.generate_text import PromptRequest
 from service.data_models.set_prompt import SetPromptRequest
-from service.data_models.onboarding import OnboardingRequest, OnboardingResponse
+from service.data_models.onboarding import (
+    OnboardingRequest,
+    OnboardingResponse,
+    Disaster,
+    Phase,
+)
 from service.data_models.disaster_context import DisasterContextRequest
 from service.utils.constants import (
     COMM_AGENT_SYS_PROMPT_KEY,
@@ -414,6 +419,18 @@ def get_map_download_status():
         return {"downloadStatus": map_store.get_download_status()}
     except ValueError:
         return {"downloadStatus": 0}
+
+
+@app.get("/checklists")
+def get_checklist(disaster: Disaster, phase: Phase):
+    checklist = ChecklistStore().get_checklist(disaster, phase)
+    if checklist is None:
+        return HTTPException(
+            status_code=404,
+            detail=f"No checklist for disaster: '{disaster.value}', phase: '{phase.value}'",
+        )
+
+    return {"checklist": checklist.get("checklist", [])}
 
 
 if __name__ == "__main__":
