@@ -3,7 +3,6 @@ import pymongo
 from service.utils.singleton import singleton
 from service.utils.environment import MONGO_HOST
 from service.utils.constants import MONGO_DB_NAME
-from service.data_models.onboarding import Disaster, Phase
 
 
 MONGO_COLLECTION_NAME = "checklists"
@@ -24,9 +23,9 @@ class ChecklistStore:
         }
         self.__collection.insert_one(document)
 
-    def get_checklist(self, disaster: Disaster, phase: Phase):
+    def get_checklist(self, disaster: str, phase: str):
         return self.__collection.find_one(
-            {"disaster_type": disaster.value, "phase": phase.value}, {"_id": 0}
+            {"disaster_type": disaster, "phase": phase}, {"_id": 0}
         )
 
     def delete_cache(self):

@@ -421,8 +421,14 @@ def get_map_download_status():
         return {"downloadStatus": 0}
 
 
-@app.get("/checklists")
-def get_checklist(disaster: Disaster, phase: Phase):
+@app.get("/current-checklist")
+def get_checklist():
+    global disaster_context
+    if disaster_context is None:
+        raise HTTPException(status_code=400, detail="Disaster context not set yet!")
+
+    disaster, phase = disaster_context.disaster, disaster_context.phase.split("-")[0]
+    logger.info(f"Fetching checklist for disaster: '{disaster}', phase: '{phase}'")
     checklist = ChecklistStore().get_checklist(disaster, phase)
     if checklist is None:
         return HTTPException(
