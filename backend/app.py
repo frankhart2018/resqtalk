@@ -106,6 +106,28 @@ async def map_downloader(lat: float, lon: float):
             asyncio.sleep(WAIT_BETWEEN_RETRIES)
 
 
+async def checklist_builder(user_details: OnboardingRequest):
+    checklist_builder_agent = ChecklistBuilderAgent()
+    disasters = user_details.selectedDisasters
+    phases = ["pre", "post"]
+    for disaster in disasters:
+        for phase in phases:
+            logging.info(
+                f"Building checklist for disaster '{disaster}' and phase '{phase}'"
+            )
+            checklist_builder_agent.build_checklist(
+                user_details=user_details, phase=phase, disaster=disaster
+            )
+
+
+async def onboarding_tasks(onboarding_request: OnboardingRequest):
+    await checklist_builder(onboarding_request)
+    await map_downloader(
+        lat=onboarding_request.location.latitude,
+        lon=onboarding_request.location.longitude,
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialization
@@ -300,28 +322,6 @@ def get_memories():
     return {"memories": MemoryStore().list_memory()}
 
 
-async def checklist_builder_coroutine(user_details: OnboardingRequest):
-    checklist_builder_agent = ChecklistBuilderAgent()
-    disasters = user_details.selectedDisasters
-    phases = ["pre", "post"]
-    for disaster in disasters:
-        for phase in phases:
-            logging.info(
-                f"Building checklist for disaster '{disaster}' and phase '{phase}'"
-            )
-            checklist_builder_agent.build_checklist(
-                user_details=user_details, phase=phase, disaster=disaster
-            )
-
-
-async def onboarding_tasks_coroutine(onboarding_request: OnboardingRequest):
-    await checklist_builder_coroutine(onboarding_request)
-    await map_downloader(
-        lat=onboarding_request.location.latitude,
-        lon=onboarding_request.location.longitude,
-    )
-
-
 @app.post("/onboarding")
 async def onboard_device(onboarding_request: OnboardingRequest):
     user_info_store = UserInfoStore()
@@ -330,9 +330,7 @@ async def onboard_device(onboarding_request: OnboardingRequest):
 
     global onboarding_task
     user_info_store.onboard_user(onboarding_request)
-    onboarding_task = asyncio.create_task(
-        onboarding_tasks_coroutine(onboarding_request)
-    )
+    onboarding_task = asyncio.create_task(onboarding_tasks(onboarding_request))
     return {"status": OnboardingResponse.OK}
 
 
