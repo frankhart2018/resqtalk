@@ -12,6 +12,8 @@ const Dashboard: React.FC = () => {
   const handleChangeDisaster = async () => {
     try {
       await deleteDisasterContext();
+      localStorage.removeItem("checklist");
+      localStorage.removeItem("checkedItems");
       navigate("/begin");
     } catch (error) {
       console.error("Error deleting disaster context:", error);
