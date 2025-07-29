@@ -15,8 +15,9 @@ import { registerTool } from "./tools/tool-utils";
 import { playSound, stopSound } from "./tools/sound-tools";
 import { getLocation, LOCATION_RESULT } from "./tools/location-tools";
 import { startFlash, stopFlash } from "./tools/flash-tools";
-import { Routes, Route,Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { addToList } from "./tools/checklist-tools";
 
 registerTool(
   "playSound",
@@ -47,6 +48,13 @@ registerTool(
   null,
   stopFlash
 );
+registerTool(
+  "addToList",
+  "Add items to the checklist",
+  [{ name: "item", type: "string", required: true }],
+  null,
+  addToList,
+)
 
 const App: React.FC = () => {
   getLocation();
