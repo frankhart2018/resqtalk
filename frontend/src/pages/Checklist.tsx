@@ -17,13 +17,22 @@ export const Checklist = () => {
   const { theme } = useTheme();
 
   useEffect(() => {
-    if (!checklist) {
+    const storedChecklist = localStorage.getItem("checklist");
+    if (storedChecklist) {
+      setChecklist(JSON.parse(storedChecklist));
+      const storedCheckedItems = localStorage.getItem("checkedItems");
+      setCheckedItems(
+        storedCheckedItems
+          ? JSON.parse(storedCheckedItems)
+          : new Array(JSON.parse(storedChecklist).checklist.length).fill(false)
+      );
+    } else {
       getCurrentChecklist().then((response) => {
         setChecklist(response);
         setCheckedItems(new Array(response.checklist.length).fill(false));
       });
     }
-  }, [checklist]);
+  }, []);
 
   useEffect(() => {
     if (checklist) {
