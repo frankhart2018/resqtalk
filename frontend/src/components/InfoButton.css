@@ -1,0 +1,12 @@
+.info-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--primary-text-color);
+  margin-right: 20px;
+}
+
+.info-button:hover {
+  color: var(--accent-color);
+}
