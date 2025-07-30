@@ -51,6 +51,15 @@
   margin-top: 15px;
 }
 
+.prompt-box .chatbot-button:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+  border-color: #cccccc;
+  animation: none;
+  background-image: none;
+}
+
 .memories-list {
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -95,4 +104,52 @@
 
 .delete-user-button:hover {
   background-color: #c82333;
+}
+
+.checklist-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.checklist-controls select {
+  width: 48%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.checklist-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+.checklist-buttons .chatbot-button {
+  width: 48%;
+}
+
+.checklist-output-area {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1em;
+  resize: none;
+  min-height: 150px;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+.chatbot.dark .checklist-output-area {
+  background-color: #40444b;
+  border: 1px solid #555;
+  color: #ffffff;
+}
+
+.chatbot.dark .checklist-controls select {
+  background-color: #40444b;
+  border: 1px solid #555;
+  color: #ffffff;
 }

@@ -19,6 +19,8 @@ from service.data_models.onboarding import (
 )
 from service.model.ollama_client import LangchainOllamaGemmaClient
 from service.utils.checklist_store import ChecklistStore
+from service.utils.prompt_store import SystemPromptStore
+from service.utils.constants import CHECKLIST_AGENT_SYS_PROMPT_KEY
 
 
 logger = logging.getLogger(__name__)
@@ -69,44 +71,25 @@ class ChecklistBuilderAgent:
     async def __orchestrator_node(
         self, state: ChecklistAgentState
     ) -> ChecklistAgentState:
+        phase = state["phase"]
+        user_info = state["user_info"]
+        disaster = state["disaster"]
+        search_queries = state["search_queries"]
+        search_results = state["search_results"]
+
         stage_info = ""
-        if state["phase"] == Phase.PRE:
+        if phase == Phase.PRE:
             stage_info = "They are preparing for an approaching "
         else:
             stage_info = "They have been struck by "
 
-        system_prompt = f"""
-        You are a disaster relief agent who specializes in building disaster preparedness or post disaster checklists.
-        A checklist is just a list of strings containing important things to keep. To prepare this checklist, you are given user information:
-        {state['user_info'].model_dump_json()}
-
-        {stage_info}{state['disaster']}.
-
-        You NEED to use the information about the user and their dependents (if any) and perform web search to get information specific to their case.
-        You also NEED to foucs on the disaster and ONLY find relevant information to that.
-
-        In order to perform a web search you NEED to return:
-        {{
-            "action": "search",
-            "query": "Your specific query using keywords you extracted from user info or previous search results"
-        }}
-
-        If you think you have enough information you need to return a final answer with checklist:
-        {{
-            "action": "final_answer",
-            "checklist": ["thing 1 that you think is useful to have based on all information", "other thing 2 based on all information"]
-        }}
-
-        You MUST stick to the JSON format specified above, the action MUST be the same, the only thing you need to change is query and checklist.
-
-        These are your previous search queries: {state['search_queries']}
-        These are the results for those queries: {state['search_results']}
-
-        If you are doing web search for the first time, you NEED to use the user info. For subsequent web searches you also NEED to use the previous search results, adding anything important that you might have found in those.
-        
-        The ONLY thing you are allowed to return are either of the two action JSONs. There should be NO extra character in your result. And the keys SHOULD match EXACTLY as given above.
-        Another IMPORTANT point is that, you should not return a comma separated string, but return individual items as strings inside a list.
-        """
+        system_prompt = SystemPromptStore().get_prompt(CHECKLIST_AGENT_SYS_PROMPT_KEY).format(
+            user_info_json=user_info.model_dump_json(),
+            stage_info=stage_info,
+            disaster=disaster,
+            search_queries=search_queries,
+            search_results=search_results,
+        )
 
         messages = state["messages"] + [{"role": "system", "content": system_prompt}]
 
