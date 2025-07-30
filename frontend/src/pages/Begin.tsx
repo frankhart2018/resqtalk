@@ -57,6 +57,8 @@ const Begin: React.FC = () => {
           disaster: selectedDisaster,
           phase: disasterPhase,
         });
+        localStorage.setItem("selectedDisaster", selectedDisaster);
+        localStorage.setItem("disasterPhase", disasterPhase);
         navigate("/dashboard");
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (_) {
