@@ -8,3 +8,4 @@ dist/
 .env
 langfuse_*/
 offline_map.db*
+resqtalk_*
