@@ -124,7 +124,10 @@ async def checklist_builder(user_details: OnboardingRequest):
                 f"Building checklist for disaster '{disaster}' and phase '{phase}'"
             )
             await checklist_builder_agent.build_checklist(
-                user_details=user_details, phase=phase, disaster=disaster
+                user_details=user_details,
+                phase=phase,
+                disaster=disaster,
+                save_to_db=True,
             )
 
 
@@ -464,6 +467,7 @@ async def run_checklist_agent(request: ChecklistAgentRequest):
         user_details=onboarding_request,
         phase=request.phase,
         disaster=request.disaster,
+        save_to_db=False,
     )
     return {"checklist": checklist}
 

@@ -83,12 +83,16 @@ class ChecklistBuilderAgent:
         else:
             stage_info = "They have been struck by "
 
-        system_prompt = SystemPromptStore().get_prompt(CHECKLIST_AGENT_SYS_PROMPT_KEY).format(
-            user_info_json=user_info.model_dump_json(),
-            stage_info=stage_info,
-            disaster=disaster,
-            search_queries=search_queries,
-            search_results=search_results,
+        system_prompt = (
+            SystemPromptStore()
+            .get_prompt(CHECKLIST_AGENT_SYS_PROMPT_KEY)
+            .format(
+                user_info_json=user_info.model_dump_json(),
+                stage_info=stage_info,
+                disaster=disaster,
+                search_queries=search_queries,
+                search_results=search_results,
+            )
         )
 
         messages = state["messages"] + [{"role": "system", "content": system_prompt}]
@@ -191,7 +195,11 @@ class ChecklistBuilderAgent:
         return {**state, "final_checklist": final_checklist}
 
     async def build_checklist(
-        self, user_details: OnboardingRequest, phase: str, disaster: Disaster
+        self,
+        user_details: OnboardingRequest,
+        phase: str,
+        disaster: Disaster,
+        save_to_db: bool = True,
     ):
         user_info = UserInfo(
             primary_user=user_details.primaryUserDetails,
@@ -219,7 +227,7 @@ class ChecklistBuilderAgent:
         )
 
         final_checklist = final_state["final_checklist"]
-        if final_checklist:
+        if final_checklist and save_to_db:
             await self._save_checklist_async(disaster.value, phase, final_checklist)
 
         return final_checklist
