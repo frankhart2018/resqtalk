@@ -10,6 +10,7 @@ import {
   deleteUser,
   getUserDetails,
   runChecklistAgent,
+  deleteMemories,
 } from "../api/api";
 import type {
   GetCurrentPrivilegesResponse,
@@ -95,6 +96,17 @@ const GodMode: React.FC = () => {
     } catch (error) {
       console.error("Error deleting user:", error);
       alert("An error occurred while deleting user data.");
+    }
+  };
+
+  const handleDeleteMemories = async () => {
+    try {
+      await deleteMemories();
+      alert("Memories wiped successfully!");
+      window.location.reload();
+    } catch (error) {
+      console.error("Error wiping memories:", error);
+      alert("An error occurred while wiping memories.");
     }
   };
 
@@ -224,6 +236,9 @@ const GodMode: React.FC = () => {
           <pre className="memories-list">
             {JSON.stringify(memories, null, 4)}
           </pre>
+          <button className="delete-user-button" onClick={handleDeleteMemories}>
+            Wipe Memories (गजनी Mode)
+          </button>
         </div>
         <div className="prompt-box">
           <label htmlFor="user-details">User Details</label>

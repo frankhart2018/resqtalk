@@ -18,6 +18,10 @@ export interface GetMemoriesResponse {
   memories: Array<Array<Record<string, unknown>>>;
 }
 
+export interface DeleteMemoriesResponse {
+  status: string;
+}
+
 export interface OnboardingPrimaryUserDetails {
   name: string;
   age: number;

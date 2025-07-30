@@ -21,3 +21,8 @@ class MemoryStore:
                 list(self.__client.scan_iter("store:*")),
             )
         )
+
+    def delete_all_memory(self):
+        keys = list(self.__client.scan_iter("store:*"))
+        if keys:
+            self.__client.delete(*keys)

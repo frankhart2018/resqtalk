@@ -193,6 +193,23 @@ export const getMemories = async (): Promise<GetMemoriesResponse> => {
   });
 };
 
+export const deleteMemories = async () => {
+  const response = await fetch(`${API_HOST}/memories`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      ...getCfAuthHeaders(),
+    },
+  });
+
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(`Memory deletion failed: ${result.status}`);
+  }
+
+  return response.json();
+};
+
 export const deleteUser = async () => {
   const response = await fetch(`${API_HOST}/user`, {
     method: "DELETE",

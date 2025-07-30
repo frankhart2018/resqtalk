@@ -341,6 +341,13 @@ def get_memories():
     return {"memories": MemoryStore().list_memory()}
 
 
+@app.delete("/memories")
+def delete_memories():
+    _check_god_mode()
+    MemoryStore().delete_all_memory()
+    return {"status": "ok"}
+
+
 @app.post("/onboarding")
 async def onboard_device(onboarding_request: OnboardingRequest):
     user_info_store = UserInfoStore()
