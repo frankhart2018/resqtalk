@@ -28,6 +28,10 @@ const GodMode: React.FC = () => {
   const [communicationAgentPrompt, setCommunicationAgentPrompt] = useState("");
   const [memoryAgentPrompt, setMemoryAgentPrompt] = useState("");
   const [checklistAgentPrompt, setChecklistAgentPrompt] = useState("");
+  const [
+    checklistAgentForceChecklistPrompt,
+    setChecklistAgentForceChecklistPrompt,
+  ] = useState("");
   const [memories, setMemories] = useState<
     Array<Array<Record<string, unknown>>>
   >([]);
@@ -67,6 +71,12 @@ const GodMode: React.FC = () => {
     getSystemPrompt("checklist-agent-sys-prompt").then(
       (data: GetSystempPromptResponse) => {
         setChecklistAgentPrompt(data.prompt);
+      }
+    );
+
+    getSystemPrompt("checklist-agent-force-checklist-sys-prompt").then(
+      (data: GetSystempPromptResponse) => {
+        setChecklistAgentForceChecklistPrompt(data.prompt);
       }
     );
 
@@ -230,6 +240,30 @@ const GodMode: React.FC = () => {
               />
             </div>
           )}
+        </div>
+        <div className="prompt-box">
+          <label htmlFor="checklist-agent-force-checklist-prompt">
+            Checklist Agent Force Checklist System Prompt
+          </label>
+          <textarea
+            id="checklist-agent-force-checklist-prompt"
+            value={checklistAgentForceChecklistPrompt}
+            onChange={(e) =>
+              setChecklistAgentForceChecklistPrompt(e.target.value)
+            }
+            rows={10}
+          />
+          <button
+            className="chatbot-button"
+            onClick={() =>
+              handleSave(
+                "checklist-agent-force-checklist-sys-prompt",
+                checklistAgentForceChecklistPrompt
+              )
+            }
+          >
+            Save
+          </button>
         </div>
         <div className="prompt-box">
           <label htmlFor="memories">Memories</label>

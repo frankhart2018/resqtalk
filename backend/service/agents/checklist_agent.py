@@ -20,7 +20,10 @@ from service.data_models.onboarding import (
 from service.model.ollama_client import LangchainOllamaGemmaClient
 from service.utils.checklist_store import ChecklistStore
 from service.utils.prompt_store import SystemPromptStore
-from service.utils.constants import CHECKLIST_AGENT_SYS_PROMPT_KEY
+from service.utils.constants import (
+    CHECKLIST_AGENT_SYS_PROMPT_KEY,
+    CHECKLIST_AGENT_FORCE_CHECKLIST_SYS_PROMPT_KEY,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -206,19 +209,9 @@ class ChecklistBuilderAgent:
             logger.error(f"Failed to build checklist in {self.max_iterations} tries!")
             logger.info("Forcing model to generate checklist")
 
-            system_prompt = """
-            Given all the information, now YOU HAVE TO generate the checklist.
-
-            To generate checklist, all you have to do is create a list of items based on the information above that the person needs to have in the situation.
-
-            ALWAYS return the checklist in this format:
-            {{
-                "action": "final_answer",
-                "checklist": ["thing 1 that you think is useful to have based on all information", "other thing 2 based on all information"]
-            }}
-
-            Only return above JSON, and NOTHING else.
-            """
+            system_prompt = SystemPromptStore().get_prompt(
+                CHECKLIST_AGENT_FORCE_CHECKLIST_SYS_PROMPT_KEY
+            )
 
             messages = messages + [{"role": "system", "content": system_prompt}]
             response = await self.llm.ainvoke(messages)
