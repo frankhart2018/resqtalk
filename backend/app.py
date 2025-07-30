@@ -35,6 +35,8 @@ from service.utils.constants import (
     COMM_AGENT_SYS_PROMPT_KEY,
     MEMORY_AGENT_SYS_PROMPT_KEY,
     CHECKLIST_AGENT_SYS_PROMPT_KEY,
+    CHECKLIST_AGENT_FORCE_CHECKLIST_SYS_PROMPT_KEY,
+    VALID_PROMPT_KEYS,
     CACHED_MAP_RADIUS,
     CACHED_MAP_MIN_ZOOM_LEVEL,
     CACHED_MAP_MAX_ZOOM_LEVEL,
@@ -306,28 +308,15 @@ def _check_god_mode():
 @app.get("/prompt")
 def get_prompt(key: str):
     _check_god_mode()
-    if key == COMM_AGENT_SYS_PROMPT_KEY:
-        return {"prompt": SystemPromptStore().get_prompt(key=COMM_AGENT_SYS_PROMPT_KEY)}
-    elif key == MEMORY_AGENT_SYS_PROMPT_KEY:
-        return {
-            "prompt": SystemPromptStore().get_prompt(key=MEMORY_AGENT_SYS_PROMPT_KEY)
-        }
-    elif key == CHECKLIST_AGENT_SYS_PROMPT_KEY:
-        return {
-            "prompt": SystemPromptStore().get_prompt(key=CHECKLIST_AGENT_SYS_PROMPT_KEY)
-        }
-    else:
+    if key not in VALID_PROMPT_KEYS:
         raise HTTPException(status_code=400, detail=f"Invalid key: '{key}'")
+    return {"prompt": SystemPromptStore().get_prompt(key=key)}
 
 
 @app.put("/prompt")
 def set_prompt(request: SetPromptRequest):
     _check_god_mode()
-    if request.key not in [
-        COMM_AGENT_SYS_PROMPT_KEY,
-        MEMORY_AGENT_SYS_PROMPT_KEY,
-        CHECKLIST_AGENT_SYS_PROMPT_KEY,
-    ]:
+    if request.key not in VALID_PROMPT_KEYS:
         raise HTTPException(status_code=400, detail=f"Invalid key: '{request.key}'")
 
     SystemPromptStore().store_prompt(key=request.key, prompt=request.prompt)

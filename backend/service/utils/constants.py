@@ -1,6 +1,16 @@
 COMM_AGENT_SYS_PROMPT_KEY = "communication-agent-sys-prompt"
 MEMORY_AGENT_SYS_PROMPT_KEY = "memory-agent-sys-prompt"
 CHECKLIST_AGENT_SYS_PROMPT_KEY = "checklist-agent-sys-prompt"
+CHECKLIST_AGENT_FORCE_CHECKLIST_SYS_PROMPT_KEY = (
+    "checklist-agent-force-checklist-sys-prompt"
+)
+
+VALID_PROMPT_KEYS = [
+    COMM_AGENT_SYS_PROMPT_KEY,
+    MEMORY_AGENT_SYS_PROMPT_KEY,
+    CHECKLIST_AGENT_SYS_PROMPT_KEY,
+    CHECKLIST_AGENT_FORCE_CHECKLIST_SYS_PROMPT_KEY,
+]
 
 MONGO_DB_NAME = "resqtalk"
 MAP_DB_NAME = "offline_map.db"
