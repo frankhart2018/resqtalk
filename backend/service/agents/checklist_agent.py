@@ -172,7 +172,24 @@ class ChecklistBuilderAgent:
         else:
             return "finish"
 
-    def __final_checklist_node(self, state: ChecklistAgentState) -> ChecklistAgentState:
+    def __parse_checklist_from_model_output(self, message: str):
+        start = message.find("{")
+        end = message.rfind("}")
+
+        only_json_message = message[start : end + 1]
+
+        try:
+            operation = json.loads(only_json_message)
+            del operation["action"]
+            return list(list(operation.values())[-1])
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse JSON: {only_json_message}")
+            return []
+
+    async def __final_checklist_node(
+        self, state: ChecklistAgentState
+    ) -> ChecklistAgentState:
+        messages = state["messages"]
         last_message = state["messages"][-1].content
 
         final_checklist = []
@@ -180,19 +197,39 @@ class ChecklistBuilderAgent:
             logger.info("Found a final checklist generated.")
 
             if "{" in last_message and "}" in last_message:
-                start = last_message.find("{")
-                end = last_message.rfind("}")
+                checklist_parsed = self.__parse_checklist_from_model_output(
+                    last_message
+                )
+                if checklist_parsed:
+                    final_checklist.extend(checklist_parsed)
+        else:
+            logger.error(f"Failed to build checklist in {self.max_iterations} tries!")
+            logger.info("Forcing model to generate checklist")
 
-                only_json_message = last_message[start : end + 1]
+            system_prompt = """
+            Given all the information, now YOU HAVE TO generate the checklist.
 
-                try:
-                    operation = json.loads(only_json_message)
-                    del operation["action"]
-                    final_checklist.extend(list(operation.values())[-1])
-                except json.JSONDecodeError:
-                    logger.error(f"Failed to parse JSON: {only_json_message}")
+            To generate checklist, all you have to do is create a list of items based on the information above that the person needs to have in the situation.
 
-        return {**state, "final_checklist": final_checklist}
+            ALWAYS return the checklist in this format:
+            {{
+                "action": "final_answer",
+                "checklist": ["thing 1 that you think is useful to have based on all information", "other thing 2 based on all information"]
+            }}
+
+            Only return above JSON, and NOTHING else.
+            """
+
+            messages = messages + [{"role": "system", "content": system_prompt}]
+            response = await self.llm.ainvoke(messages)
+            messages.append(AIMessage(content=response.content))
+
+            last_message = response.content
+            checklist_parsed = self.__parse_checklist_from_model_output(last_message)
+            if checklist_parsed:
+                final_checklist.extend(checklist_parsed)
+
+        return {**state, "final_checklist": final_checklist, "messages": messages}
 
     async def build_checklist(
         self,
