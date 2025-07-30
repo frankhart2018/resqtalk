@@ -9,6 +9,7 @@ import {
   getMemories,
   deleteUser,
   getUserDetails,
+  runChecklistAgent,
 } from "../api/api";
 import type {
   GetCurrentPrivilegesResponse,
@@ -25,12 +26,17 @@ const GodMode: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [communicationAgentPrompt, setCommunicationAgentPrompt] = useState("");
   const [memoryAgentPrompt, setMemoryAgentPrompt] = useState("");
+  const [checklistAgentPrompt, setChecklistAgentPrompt] = useState("");
   const [memories, setMemories] = useState<
     Array<Array<Record<string, unknown>>>
   >([]);
   const [userDetails, setUserDetails] = useState<GetUserDetailsResponse | null>(
     null
   );
+  const [selectedDisaster, setSelectedDisaster] = useState("earthquake");
+  const [selectedPhase, setSelectedPhase] = useState("pre");
+  const [checklistAgentOutput, setChecklistAgentOutput] = useState("");
+  const [isChecklistAgentRunning, setIsChecklistAgentRunning] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,6 +60,12 @@ const GodMode: React.FC = () => {
     getSystemPrompt("memory-agent-sys-prompt").then(
       (data: GetSystempPromptResponse) => {
         setMemoryAgentPrompt(data.prompt);
+      }
+    );
+
+    getSystemPrompt("checklist-agent-sys-prompt").then(
+      (data: GetSystempPromptResponse) => {
+        setChecklistAgentPrompt(data.prompt);
       }
     );
 
@@ -83,6 +95,20 @@ const GodMode: React.FC = () => {
     } catch (error) {
       console.error("Error deleting user:", error);
       alert("An error occurred while deleting user data.");
+    }
+  };
+
+  const handleRunChecklistAgent = async () => {
+    setIsChecklistAgentRunning(true);
+    try {
+      const response = await runChecklistAgent(selectedDisaster, selectedPhase);
+      setChecklistAgentOutput(JSON.stringify(response.checklist, null, 2));
+      alert("Checklist agent ran successfully!");
+    } catch (error) {
+      console.error("Error running checklist agent:", error);
+      alert("An error occurred while running the checklist agent.");
+    } finally {
+      setIsChecklistAgentRunning(false);
     }
   };
 
@@ -134,6 +160,64 @@ const GodMode: React.FC = () => {
           >
             Save
           </button>
+        </div>
+        <div className="prompt-box">
+          <label htmlFor="checklist-agent-prompt">
+            Checklist Agent System Prompt
+          </label>
+          <textarea
+            id="checklist-agent-prompt"
+            value={checklistAgentPrompt}
+            onChange={(e) => setChecklistAgentPrompt(e.target.value)}
+            rows={10}
+          />
+          <div className="checklist-controls">
+            <select
+              value={selectedDisaster}
+              onChange={(e) => setSelectedDisaster(e.target.value)}
+            >
+              <option value="earthquake">Earthquake</option>
+              <option value="tornado">Tornado</option>
+              <option value="flood">Flood</option>
+            </select>
+            <select
+              value={selectedPhase}
+              onChange={(e) => setSelectedPhase(e.target.value)}
+            >
+              <option value="pre">Pre-Disaster</option>
+              <option value="post">Post-Disaster</option>
+            </select>
+          </div>
+          <div className="checklist-buttons">
+            <button
+              className="chatbot-button"
+              onClick={handleRunChecklistAgent}
+              disabled={isChecklistAgentRunning}
+            >
+              {isChecklistAgentRunning ? "Running Checklist Agent..." : "Run Checklist Agent"}
+            </button>
+            <button
+              className="chatbot-button"
+              onClick={() =>
+                handleSave("checklist-agent-sys-prompt", checklistAgentPrompt)
+              }
+            >
+              Save
+            </button>
+          </div>
+          {checklistAgentOutput && (
+            <div className="prompt-box">
+              <label htmlFor="checklist-agent-output">
+                Checklist Agent Output
+              </label><br />
+              <textarea
+                id="checklist-agent-output"
+                value={checklistAgentOutput}
+                readOnly
+                rows={10}
+              />
+            </div>
+          )}
         </div>
         <div className="prompt-box">
           <label htmlFor="memories">Memories</label>

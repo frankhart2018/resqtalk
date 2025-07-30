@@ -29,10 +29,12 @@ from service.data_models.onboarding import (
     Disaster,
     Phase,
 )
+from service.data_models.checklist import ChecklistAgentRequest
 from service.data_models.disaster_context import DisasterContextRequest
 from service.utils.constants import (
     COMM_AGENT_SYS_PROMPT_KEY,
     MEMORY_AGENT_SYS_PROMPT_KEY,
+    CHECKLIST_AGENT_SYS_PROMPT_KEY,
     CACHED_MAP_RADIUS,
     CACHED_MAP_MIN_ZOOM_LEVEL,
     CACHED_MAP_MAX_ZOOM_LEVEL,
@@ -307,6 +309,10 @@ def get_prompt(key: str):
         return {
             "prompt": SystemPromptStore().get_prompt(key=MEMORY_AGENT_SYS_PROMPT_KEY)
         }
+    elif key == CHECKLIST_AGENT_SYS_PROMPT_KEY:
+        return {
+            "prompt": SystemPromptStore().get_prompt(key=CHECKLIST_AGENT_SYS_PROMPT_KEY)
+        }
     else:
         raise HTTPException(status_code=400, detail=f"Invalid key: '{key}'")
 
@@ -314,7 +320,11 @@ def get_prompt(key: str):
 @app.put("/prompt")
 def set_prompt(request: SetPromptRequest):
     _check_god_mode()
-    if request.key not in [COMM_AGENT_SYS_PROMPT_KEY, MEMORY_AGENT_SYS_PROMPT_KEY]:
+    if request.key not in [
+        COMM_AGENT_SYS_PROMPT_KEY,
+        MEMORY_AGENT_SYS_PROMPT_KEY,
+        CHECKLIST_AGENT_SYS_PROMPT_KEY,
+    ]:
         raise HTTPException(status_code=400, detail=f"Invalid key: '{request.key}'")
 
     SystemPromptStore().store_prompt(key=request.key, prompt=request.prompt)
@@ -437,6 +447,25 @@ def get_checklist():
         )
 
     return {"checklist": checklist.get("checklist", [])}
+
+
+@app.post("/checklist-agent")
+async def run_checklist_agent(request: ChecklistAgentRequest):
+    _check_god_mode()
+    user_info_store = UserInfoStore()
+    user_info = user_info_store.get_user_document()
+    if not user_info:
+        raise HTTPException(status_code=404, detail="User not onboarded yet.")
+
+    onboarding_request = OnboardingRequest(**user_info)
+
+    checklist_builder_agent = ChecklistBuilderAgent()
+    checklist = await checklist_builder_agent.build_checklist(
+        user_details=onboarding_request,
+        phase=request.phase,
+        disaster=request.disaster,
+    )
+    return {"checklist": checklist}
 
 
 if __name__ == "__main__":

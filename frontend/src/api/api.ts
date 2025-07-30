@@ -329,3 +329,22 @@ export const getMapDownloadStatus = async (): Promise<GetMapDownloadStatus> => {
     }
   });
 };
+
+export const runChecklistAgent = async (
+  disaster: string,
+  phase: string
+): Promise<GetChecklistResponse> => {
+  return fetch(`${API_HOST}/checklist-agent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...getCfAuthHeaders(),
+    },
+    body: JSON.stringify({ disaster, phase }),
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+  });
+};
