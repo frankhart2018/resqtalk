@@ -26,16 +26,11 @@ from service.data_models.set_prompt import SetPromptRequest
 from service.data_models.onboarding import (
     OnboardingRequest,
     OnboardingResponse,
-    Disaster,
-    Phase,
 )
 from service.data_models.checklist import ChecklistAgentRequest
+from service.data_models.create_memory import CreateMemoryRequest
 from service.data_models.disaster_context import DisasterContextRequest
 from service.utils.constants import (
-    COMM_AGENT_SYS_PROMPT_KEY,
-    MEMORY_AGENT_SYS_PROMPT_KEY,
-    CHECKLIST_AGENT_SYS_PROMPT_KEY,
-    CHECKLIST_AGENT_FORCE_CHECKLIST_SYS_PROMPT_KEY,
     VALID_PROMPT_KEYS,
     CACHED_MAP_RADIUS,
     CACHED_MAP_MIN_ZOOM_LEVEL,
@@ -328,6 +323,18 @@ def set_prompt(request: SetPromptRequest):
 def get_memories():
     _check_god_mode()
     return {"memories": MemoryStore().list_memory()}
+
+
+@app.post("/create-memory")
+async def create_memory(request: CreateMemoryRequest):
+    _check_god_mode()
+    try:
+        await memory_agent.store_memory(request.message)
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail={"status": "error", "message": str(e)}
+        )
 
 
 @app.delete("/memories")
