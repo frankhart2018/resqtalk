@@ -95,8 +95,10 @@ const GodMode: React.FC = () => {
   }, [navigate]);
 
   const handleSave = async (key: string, prompt: string) => {
-    await setSystemPrompt(key, prompt);
-    window.location.reload();
+    await setSystemPrompt(key, prompt).then(() => {
+      alert("Successfully saved system prompt!")
+      window.location.reload();
+    });
   };
 
   const handleDeleteUser = async () => {
