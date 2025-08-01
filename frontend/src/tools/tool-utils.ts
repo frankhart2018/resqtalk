@@ -55,6 +55,7 @@ export const registerTool = (
   });
 };
 
+
 export const getPromptWithTools = (): string => {
   const tools = JSON.stringify(
     // Remove result from tools for prompts
@@ -63,14 +64,22 @@ export const getPromptWithTools = (): string => {
     null,
     2
   );
-  return `You have access to functions. If you decide to invoke any of the function(s),
-you MUST put it in the format of
-{"name": function name, "parameters": dictionary of argument name and its value}
+  
+  return `You have access to emergency functions. When providing emergency assistance:
 
-If you do not have to use any function calls, then just return a plain string with your response.
+1. ALWAYS provide life-saving guidance text first
+2. If you decide to invoke any function(s), add the function call AFTER your emergency guidance text
+3. Function calls must be in this exact format: {"name": function name, "parameters": dictionary of argument name and its value}
+4. For emergency situations, text guidance is your primary responsibility - tools are secondary
 
-You SHOULD NOT include any other text in the response if you call a function. The name of the function
-should match EXACTLY one of these functions at a time:
+Emergency function usage guidelines:
+- playSound: ONLY when user is physically trapped and needs rescuers to find them
+- startFlash: ONLY when it's dark AND user needs visual location assistance for rescue
+- getLocation: ONLY when user explicitly asks for coordinates to share with 911/rescuers
+- stopSound/stopFlash: To stop active signals
+- addToList: When user requests emergency preparation checklists
+
+The available functions are:
 ${tools}`;
 };
 
