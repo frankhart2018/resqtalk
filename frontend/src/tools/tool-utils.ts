@@ -23,6 +23,7 @@ interface ResultConst {
 interface Tool {
   name: string;
   description: string;
+  userguidelines: string;
   parameters: ToolParameters;
   fun: ToolFunction;
   result: ResultConst | null;
@@ -33,6 +34,7 @@ const TOOLS: Tool[] = [];
 export const registerTool = (
   toolName: string,
   description: string,
+  userguidelines: string,
   parameters: FormalParameter[],
   result: ResultConst | null,
   fun: ToolFunction
@@ -40,6 +42,7 @@ export const registerTool = (
   TOOLS.push({
     name: toolName,
     description,
+    userguidelines,
     parameters: {
       type: "object",
       properties: parameters.reduce<ToolProperties>((acc, parameter) => {
@@ -60,7 +63,7 @@ export const getPromptWithTools = (): string => {
   const tools = JSON.stringify(
     // Remove result from tools for prompts
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    TOOLS.map(({ result, ...rest }: Tool) => rest),
+    TOOLS.map(({ result, userguidelines, ...rest }: Tool) => rest),
     null,
     2
   );
@@ -73,11 +76,7 @@ export const getPromptWithTools = (): string => {
 4. For emergency situations, text guidance is your primary responsibility - tools are secondary
 
 Emergency function usage guidelines:
-- playSound: ONLY when user is physically trapped and needs rescuers to find them
-- startFlash: ONLY when it's dark AND user needs visual location assistance for rescue
-- getLocation: ONLY when user explicitly asks for coordinates to share with 911/rescuers
-- stopSound/stopFlash: To stop active signals
-- addToList: When user requests emergency preparation checklists
+${TOOLS.map((tool) => `- ${tool.name}: ${tool.userguidelines}`).join("\n")}
 
 The available functions are:
 ${tools}`;
