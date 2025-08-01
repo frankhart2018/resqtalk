@@ -61,25 +61,33 @@ export const registerTool = (
 
 export const getPromptWithTools = (): string => {
   const tools = JSON.stringify(
-    // Remove result from tools for prompts
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    TOOLS.map(({ result, userguidelines, ...rest }: Tool) => rest),
+    TOOLS.map(({ result, ...rest }: Tool) => rest),
     null,
     2
   );
   
   return `You have access to emergency functions. When providing emergency assistance:
 
-1. ALWAYS provide life-saving guidance text first
-2. If you decide to invoke any function(s), add the function call AFTER your emergency guidance text
-3. Function calls must be in this exact format: {"name": function name, "parameters": dictionary of argument name and its value}
-4. For emergency situations, text guidance is your primary responsibility - tools are secondary
+  1. ALWAYS provide life-saving guidance text first
+  2. If you need to use a function, format your response EXACTLY like this:
 
-Emergency function usage guidelines:
-${TOOLS.map((tool) => `- ${tool.name}: ${tool.userguidelines}`).join("\n")}
+  **For responses WITH tool calls:**
+  [Your emergency guidance text here]
 
-The available functions are:
-${tools}`;
+  TOOL_CALL: {"name": "functionName", "parameters": {}}
+
+  **For responses WITHOUT tool calls:**
+  [Your emergency guidance text here]
+
+  Emergency function usage guidelines:
+  - playSound: ONLY when user is physically trapped and needs rescuers to find them
+  - startFlash: ONLY when it's dark AND user needs visual location assistance for rescue  
+  - getLocation: ONLY when user explicitly asks for coordinates to share with 911/rescuers
+  - stopSound/stopFlash: To stop active signals
+  - addToList: When user requests emergency preparation checklists
+
+  The available functions are:
+  ${tools}`;
 };
 
 export const executeToolCall = (
