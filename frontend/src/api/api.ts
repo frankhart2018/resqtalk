@@ -129,6 +129,7 @@ export const getTextModeResponse = async (
       prompt,
     }),
   });
+  console.log("getting text mode response:", response);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
