@@ -66,23 +66,8 @@ export const getPromptWithTools = (): string => {
     2
   );
   
-  return `You have access to emergency functions. When providing emergency assistance:
-
-  1. ALWAYS provide life-saving guidance text first
-  2. If you need to use a function, format your response EXACTLY like this:
-
-  **For responses WITH tool calls:**
-  [Your emergency guidance text here]
-
-  TOOL_CALL: {"name": "functionName", "parameters": {}}
-
-  **For responses WITHOUT tool calls:**
-  [Your emergency guidance text here]
-
-  Emergency function usage guidelines:
-  ${TOOLS.map((tool) => `- ${tool.name}: ${tool.userguidelines}`).join("\n")}
-  The available functions are:
-  ${tools}`;
+  // Make it clear this is system information, not user content
+  return `<system>Emergency functions available: ${tools}. When needed, use format: {"name": "functionName", "parameters": {}}</system>`;
 };
 
 export const executeToolCall = (

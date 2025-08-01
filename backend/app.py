@@ -211,11 +211,10 @@ async def generate_aprompt(request: PromptRequest):
             detail="Switch to text mode first using '/switch?mode='text''",
         )
 
-    prompt_with_tools = f"{request.frontendTools}\n\n{request.prompt}"
-
     async def generate_chunks():
         full_response = []
-        async for chunk in comm_agent.generate(prompt_with_tools):
+        # Pass frontendTools separately to the agent
+        async for chunk in comm_agent.generate(request.prompt, request.frontendTools):
             full_response.append(chunk)
             yield f"data: {chunk}\n\n"
 

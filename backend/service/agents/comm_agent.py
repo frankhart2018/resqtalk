@@ -28,13 +28,22 @@ class CommunicationAgent:
         memory_attachment = (
             "Also here are the details about the user you are talking to:\n\n{info}"
         ).format(info=info)
-        system_msg = f"{SystemPromptStore().get_prompt(key=COMM_AGENT_SYS_PROMPT_KEY)}\n{memory_attachment}"
+        
+        # Get the base system prompt
+        base_system_prompt = SystemPromptStore().get_prompt(key=COMM_AGENT_SYS_PROMPT_KEY)
+        
+        # Get tools from config if provided
+        tools_prompt = config.get("configurable", {}).get("tools_prompt", "")
+        
+        # Combine them properly
+        system_msg = f"{base_system_prompt}\n\n{tools_prompt}\n\n{memory_attachment}"
+        
         response = await self.model.ainvoke(
             [{"role": "system", "content": system_msg}] + state["messages"], config
         )
         return {"messages": response}
 
-    async def generate(self, prompt: str):
+    async def generate(self, prompt: str, tools_prompt: str = ""):
         with RedisStore.from_conn_string(REDIS_HOST) as store:
             store.setup()
 
@@ -49,7 +58,11 @@ class CommunicationAgent:
             graph = builder.compile(store=store)
 
             config = {
-                "configurable": {"thread_id": "1", "user_id": "1"},
+                "configurable": {
+                    "thread_id": "1", 
+                    "user_id": "1",
+                    "tools_prompt": tools_prompt  # Pass tools here
+                },
                 "callbacks": [langfuse_handler],
             }
 
