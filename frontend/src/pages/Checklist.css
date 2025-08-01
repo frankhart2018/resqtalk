@@ -15,6 +15,17 @@
   max-width: 800px; /* Adjust as needed */
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .checklist-item {
   background-color: var(--button-background);
   border: 2px solid var(--button-border-color);
@@ -25,7 +36,23 @@
   align-items: center;
   color: var(--button-text);
   transition: background-color 0.3s ease;
+  animation: fadeIn 0.5s ease-out forwards;
+  opacity: 0; /* Start with opacity 0 for the animation */
+  animation-fill-mode: forwards;
 }
+
+/* Stagger the animation for each item */
+.checklist-item:nth-child(1) { animation-delay: 0.1s; }
+.checklist-item:nth-child(2) { animation-delay: 0.2s; }
+.checklist-item:nth-child(3) { animation-delay: 0.3s; }
+.checklist-item:nth-child(4) { animation-delay: 0.4s; }
+.checklist-item:nth-child(5) { animation-delay: 0.5s; }
+.checklist-item:nth-child(6) { animation-delay: 0.6s; }
+.checklist-item:nth-child(7) { animation-delay: 0.7s; }
+.checklist-item:nth-child(8) { animation-delay: 0.8s; }
+.checklist-item:nth-child(9) { animation-delay: 0.9s; }
+.checklist-item:nth-child(10) { animation-delay: 1.0s; }
+
 
 .checklist-item:hover {
   background-color: var(--button-hover-background);
@@ -42,3 +69,9 @@
   flex-grow: 1;
   font-size: 1.1rem;
 }
+
+.checklist-item.checked label {
+  text-decoration: line-through;
+  color: #888;
+}
+

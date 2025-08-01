@@ -23,6 +23,7 @@ interface ResultConst {
 interface Tool {
   name: string;
   description: string;
+  userguidelines: string;
   parameters: ToolParameters;
   fun: ToolFunction;
   result: ResultConst | null;
@@ -33,6 +34,7 @@ const TOOLS: Tool[] = [];
 export const registerTool = (
   toolName: string,
   description: string,
+  userguidelines: string,
   parameters: FormalParameter[],
   result: ResultConst | null,
   fun: ToolFunction
@@ -40,6 +42,7 @@ export const registerTool = (
   TOOLS.push({
     name: toolName,
     description,
+    userguidelines,
     parameters: {
       type: "object",
       properties: parameters.reduce<ToolProperties>((acc, parameter) => {
@@ -55,22 +58,27 @@ export const registerTool = (
   });
 };
 
+
 export const getPromptWithTools = (): string => {
   const tools = JSON.stringify(
     // Remove result from tools for prompts
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    TOOLS.map(({ result, ...rest }: Tool) => rest),
+    TOOLS.map(({ result, userguidelines, ...rest }: Tool) => rest),
     null,
     2
   );
-  return `You have access to functions. If you decide to invoke any of the function(s),
-you MUST put it in the format of
-{"name": function name, "parameters": dictionary of argument name and its value}
+  
+  return `You have access to emergency functions. When providing emergency assistance:
 
-If you do not have to use any function calls, then just return a plain string with your response.
+1. ALWAYS provide life-saving guidance text first
+2. If you decide to invoke any function(s), add the function call AFTER your emergency guidance text
+3. Function calls must be in this exact format: {"name": function name, "parameters": dictionary of argument name and its value}
+4. For emergency situations, text guidance is your primary responsibility - tools are secondary
 
-You SHOULD NOT include any other text in the response if you call a function. The name of the function
-should match EXACTLY one of these functions at a time:
+Emergency function usage guidelines:
+${TOOLS.map((tool) => `- ${tool.name}: ${tool.userguidelines}`).join("\n")}
+
+The available functions are:
 ${tools}`;
 };
 

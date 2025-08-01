@@ -108,6 +108,7 @@ const Chatbot: React.FC = () => {
   // MODEL CALLING HELPERS
   /////////////////////////////////////////////////////////////////
   const processMessageForToolCalls = (replyData: string) => {
+    console.log("Processing message for tool calls:", replyData);
     if (replyData.trim().startsWith("{") && replyData.trim().endsWith("}")) {
       try {
         const [toolCallResult, toolName] = processToolCallMessages(replyData);
@@ -143,8 +144,38 @@ const Chatbot: React.FC = () => {
         });
 
         const transcription = (await getVoiceModeResponse(audioBlob)).response;
-        appendBotMessage(transcription);
-        processMessageForToolCalls(transcription);
+
+        const toolCallPrefix = "TOOL_CALL: ";
+        let textResponse = transcription;
+        let toolCall = null;
+
+        if (transcription.includes(toolCallPrefix)) {
+          const parts = transcription.split(toolCallPrefix);
+          textResponse = parts[0].trim();
+          const toolCallStr = parts[1];
+          try {
+            toolCall = JSON.parse(toolCallStr);
+          } catch (e) {
+            console.error("Failed to parse tool call JSON:", e);
+          }
+        }
+
+        appendBotMessage(textResponse);
+
+        if (toolCall) {
+          const toolCallResult = executeToolCall(
+            (toolCall as { name: string; parameters: any }).name,
+            (toolCall as { name: string; parameters: any }).parameters
+          );
+          if (toolCallResult) {
+            appendBotMessage(toolCallResult);
+          } else {
+            // No explicit result message, so don't append a new message.
+            console.log(
+              `Executed tool: ${(toolCall as { name: string }).name}`
+            );
+          }
+        }
       } catch (error) {
         console.error("Error processing audio:", error);
         appendBotMessage("Error: Could not process audio recording.");
@@ -158,6 +189,7 @@ const Chatbot: React.FC = () => {
   };
 
   const streamPromptResponse = async (prompt: string): Promise<string> => {
+    console.log("Streaming prompt response:", prompt);
     let replyData = "";
     try {
       const reader = await getTextModeResponse(prompt);
@@ -202,8 +234,38 @@ const Chatbot: React.FC = () => {
       setIsLoading(true);
       try {
         const replyData = await streamPromptResponse(inputValue);
-        processMessageForToolCalls(replyData);
-        // If it's not a tool call, the message is already displayed by streamPromptResponse.
+
+        const toolCallPrefix = "TOOL_CALL: ";
+        let textResponse = replyData;
+        let toolCall = null;
+
+        if (replyData.includes(toolCallPrefix)) {
+          const parts = replyData.split(toolCallPrefix);
+          textResponse = parts[0].trim();
+          const toolCallStr = parts[1];
+          try {
+            toolCall = JSON.parse(toolCallStr);
+          } catch (e) {
+            console.error("Failed to parse tool call JSON:", e);
+          }
+        }
+
+        replaceLastBotMessage(textResponse);
+
+        if (toolCall) {
+          const toolCallResult = executeToolCall(
+            (toolCall as { name: string; parameters: any }).name,
+            (toolCall as { name: string; parameters: any }).parameters
+          );
+          if (toolCallResult) {
+            appendBotMessage(toolCallResult);
+          } else {
+            // No explicit result message, so don't append a new message.
+            console.log(
+              `Executed tool: ${(toolCall as { name: string }).name}`
+            );
+          }
+        }
       } catch (error) {
         console.error("Error sending message:", error);
         replaceLastBotMessage("Error: Could not get a response from the bot.");

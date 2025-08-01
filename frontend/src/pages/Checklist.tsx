@@ -46,7 +46,7 @@ export const Checklist = () => {
       <div className="checklist-content-container">
         <ul className="checklist">
           {checklist?.checklist.map((item, index) => (
-            <li key={index} className="checklist-item">
+            <li key={index} className={`checklist-item ${checkedItems[index] ? 'checked' : ''}`}>
               <input
                 type="checkbox"
                 id={`item-${index}`}

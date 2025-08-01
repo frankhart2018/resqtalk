@@ -22,14 +22,16 @@ import { addToList } from "./tools/checklist-tools";
 registerTool(
   "playSound",
   "Play a siren, this can be used to alert others in case of emergency/disasters",
+  "ONLY when user is physically trapped and needs rescuers to find them",
   [],
   null,
   playSound
 );
-registerTool("stopSound", "Stop the siren", [], null, stopSound);
+registerTool("stopSound", "Stop the siren", "To stop active signals", [], null, stopSound);
 registerTool(
   "getLocation",
   "Fetch the user's current location/Tell them their location",
+  "ONLY when user explicitly asks for coordinates to share with 911/rescuers",
   [],
   LOCATION_RESULT,
   getLocation
@@ -37,6 +39,7 @@ registerTool(
 registerTool(
   "startFlash",
   "Start a flashing light on the screen to attract attention",
+  "ONLY when it's dark AND user needs visual location assistance for rescue",
   [],
   null,
   startFlash
@@ -44,6 +47,7 @@ registerTool(
 registerTool(
   "stopFlash",
   "Stop the flashing light on the screen",
+  "To stop active signals",
   [],
   null,
   stopFlash
@@ -51,10 +55,11 @@ registerTool(
 registerTool(
   "addToList",
   "Add items to the checklist",
+  "When user requests emergency preparation checklists",
   [{ name: "item", type: "string", required: true }],
   null,
-  addToList,
-)
+  addToList
+);
 
 const App: React.FC = () => {
   getLocation();
