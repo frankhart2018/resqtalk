@@ -80,12 +80,7 @@ export const getPromptWithTools = (): string => {
   [Your emergency guidance text here]
 
   Emergency function usage guidelines:
-  - playSound: ONLY when user is physically trapped and needs rescuers to find them
-  - startFlash: ONLY when it's dark AND user needs visual location assistance for rescue  
-  - getLocation: ONLY when user explicitly asks for coordinates to share with 911/rescuers
-  - stopSound/stopFlash: To stop active signals
-  - addToList: When user requests emergency preparation checklists
-
+  ${TOOLS.map((tool) => `- ${tool.name}: ${tool.userguidelines}`).join("\n")}
   The available functions are:
   ${tools}`;
 };
