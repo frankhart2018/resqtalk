@@ -100,6 +100,7 @@
   font-weight: 500;
   margin-left: 10px;
   transition: background-color 0.2s;
+  margin-bottom: 15px;
 }
 
 .delete-user-button:hover {
@@ -152,4 +153,19 @@
   background-color: #40444b;
   border: 1px solid #555;
   color: #ffffff;
+}
+
+.chat-upload-section {
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  padding: 15px 0;
+}
+
+.chat-upload-section label {
+  font-size: 1.3em;
+  font-weight: 700;
+}
+
+.chatbot.dark .chat-upload-section {
+  border-color: #555;
 }

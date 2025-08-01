@@ -96,7 +96,7 @@ const GodMode: React.FC = () => {
 
   const handleSave = async (key: string, prompt: string) => {
     await setSystemPrompt(key, prompt).then(() => {
-      alert("Successfully saved system prompt!")
+      alert("Successfully saved system prompt!");
       window.location.reload();
     });
   };
@@ -133,6 +133,27 @@ const GodMode: React.FC = () => {
       alert("An error occurred while running the checklist agent.");
     } finally {
       setIsChecklistAgentRunning(false);
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result;
+        if (typeof content === "string") {
+          try {
+            const json = JSON.parse(content);
+            localStorage.setItem("chatMessages", JSON.stringify(json));
+            alert("Chat history loaded successfully!");
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (error) {
+            alert("Invalid JSON file.");
+          }
+        }
+      };
+      reader.readAsText(file);
     }
   };
 
@@ -218,7 +239,9 @@ const GodMode: React.FC = () => {
               onClick={handleRunChecklistAgent}
               disabled={isChecklistAgentRunning}
             >
-              {isChecklistAgentRunning ? "Running Checklist Agent..." : "Run Checklist Agent"}
+              {isChecklistAgentRunning
+                ? "Running Checklist Agent..."
+                : "Run Checklist Agent"}
             </button>
             <button
               className="chatbot-button"
@@ -233,7 +256,8 @@ const GodMode: React.FC = () => {
             <div className="prompt-box">
               <label htmlFor="checklist-agent-output">
                 Checklist Agent Output
-              </label><br />
+              </label>
+              <br />
               <textarea
                 id="checklist-agent-output"
                 value={checklistAgentOutput}
@@ -275,6 +299,15 @@ const GodMode: React.FC = () => {
           <button className="delete-user-button" onClick={handleDeleteMemories}>
             Wipe Memories (गजनी Mode)
           </button>
+          <div className="prompt-box chat-upload-section">
+            <label htmlFor="chat-upload">Load chat</label>
+            <input
+              type="file"
+              id="chat-upload"
+              accept=".json"
+              onChange={handleFileUpload}
+            />
+          </div>
         </div>
         <div className="prompt-box">
           <label htmlFor="user-details">User Details</label>
