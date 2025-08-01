@@ -16,6 +16,7 @@ const Dashboard: React.FC = () => {
       localStorage.removeItem("checkedItems");
       localStorage.removeItem("selectedDisaster");
       localStorage.removeItem("disasterPhase");
+      localStorage.removeItem('chatMessages');
       navigate("/begin");
     } catch (error) {
       console.error("Error deleting disaster context:", error);

@@ -55,9 +55,17 @@ const Chatbot: React.FC = () => {
     getCurrentMode().then((data: GetCurrentModeResponse) => {
       setMode(data.mode);
     });
+
+    const storedMessages = localStorage.getItem('chatMessages');
+    if (storedMessages) {
+      setMessages(JSON.parse(storedMessages));
+    }
   }, []);
 
   useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('chatMessages', JSON.stringify(messages.slice(-50)));
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
