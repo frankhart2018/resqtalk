@@ -58,7 +58,6 @@ export const registerTool = (
   });
 };
 
-
 export const getPromptWithTools = (): string => {
   const tools = JSON.stringify(
     // Remove result from tools for prompts
@@ -67,13 +66,13 @@ export const getPromptWithTools = (): string => {
     null,
     2
   );
-  
-  return `You have access to emergency functions. When providing emergency assistance:
 
-1. ALWAYS provide life-saving guidance text first
-2. If you decide to invoke any function(s), add the function call AFTER your emergency guidance text
-3. Function calls must be in this exact format: {"name": function name, "parameters": dictionary of argument name and its value}
-4. For emergency situations, text guidance is your primary responsibility - tools are secondary
+  return `You have access to a set of functions to help in emergencies. 
+Only use a function if it is absolutely necessary for a rescue situation, 
+as defined by the guidelines below. 
+
+If you use a function, append the TOOL_CALL JSON to the end of your text response. For example:
+TOOL_CALL: {"name": "functionName", "parameters": {}}
 
 Emergency function usage guidelines:
 ${TOOLS.map((tool) => `- ${tool.name}: ${tool.userguidelines}`).join("\n")}
