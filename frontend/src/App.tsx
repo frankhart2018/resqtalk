@@ -12,9 +12,9 @@ import Maps from "./pages/Maps";
 import { Checklist } from "./pages/Checklist";
 import "./App.css";
 import { registerTool } from "./tools/tool-utils";
-import { playSound, stopSound } from "./tools/sound-tools";
+import { playSound } from "./tools/sound-tools";
 import { getLocation, LOCATION_RESULT } from "./tools/location-tools";
-import { startFlash, stopFlash } from "./tools/flash-tools";
+import { startFlash } from "./tools/flash-tools";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { addToList } from "./tools/checklist-tools";
@@ -27,7 +27,6 @@ registerTool(
   null,
   playSound
 );
-registerTool("stopSound", "Stop the siren", "To stop active signals", [], null, stopSound);
 registerTool(
   "getLocation",
   "Fetch the user's current location/Tell them their location",
@@ -43,14 +42,6 @@ registerTool(
   [],
   null,
   startFlash
-);
-registerTool(
-  "stopFlash",
-  "Stop the flashing light on the screen",
-  "To stop active signals",
-  [],
-  null,
-  stopFlash
 );
 registerTool(
   "addToList",
