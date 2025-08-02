@@ -18,6 +18,11 @@ import { startFlash } from "./tools/flash-tools";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { addToList } from "./tools/checklist-tools";
+import {
+  navigateToList,
+  navigateToLiveAlerts,
+  navigateToMaps,
+} from "./tools/nav-tools";
 
 registerTool(
   "playSound",
@@ -46,10 +51,34 @@ registerTool(
 registerTool(
   "addToList",
   "Add items to the checklist",
-  "When user requests emergency preparation checklists",
+  "When you think something needs to be added to the checklist",
   [{ name: "item", type: "string", required: true }],
   null,
   addToList
+);
+registerTool(
+  "navigateToMaps",
+  "Take the user to maps page for helping them navigate",
+  "ONLY when the user needs to get out of some place or specifically asks for navigation",
+  [],
+  null,
+  navigateToMaps
+);
+registerTool(
+  "navigateToList",
+  "Take the user to checklist page",
+  "When the user specifically asks for it, or when you NEED to remind user to get back to checklist",
+  [],
+  null,
+  navigateToList
+);
+registerTool(
+  "navigateToLiveAlerts",
+  "Take the user to live alerts page",
+  "ONLY when the user asks for checking live alerts",
+  [],
+  null,
+  navigateToLiveAlerts
 );
 
 const App: React.FC = () => {

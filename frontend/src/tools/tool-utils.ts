@@ -73,6 +73,7 @@ as defined by the guidelines below.
 
 If you use a function, append the TOOL_CALL JSON to the end of your text response. For example:
 TOOL_CALL: {"name": "functionName", "parameters": {}}
+This format for tool call should be followed STRICTLY WITHOUT ANY ERRORS.
 
 Emergency function usage guidelines:
 ${TOOLS.map((tool) => `- ${tool.name}: ${tool.userguidelines}`).join("\n")}
