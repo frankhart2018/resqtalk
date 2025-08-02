@@ -49,17 +49,6 @@ echo "Moving current backup to $TAR_SOURCE_DIR"
 # Move the current backup into the 'backups' directory within the temporary parent
 mv "$CURRENT_BACKUP_DIR" "$TAR_SOURCE_DIR/"
 
-# Path to offline_map.db
-OFFLINE_MAP_DB="../backend/offline_map.db"
-
-# Check if offline_map.db exists and copy it to the tar source directory
-if [ -f "$OFFLINE_MAP_DB" ]; then
-  echo "Copying offline_map.db to $TAR_SOURCE_DIR"
-  cp "$OFFLINE_MAP_DB" "$TAR_SOURCE_DIR/"
-else
-  echo "offline_map.db not found at $OFFLINE_MAP_DB, skipping copy."
-fi
-
 # Define the tarball name and path
 TARBALL_NAME="${DB_NAME}_backup_${TIMESTAMP}.tar.gz"
 TARBALL_PATH="./$TARBALL_NAME"
