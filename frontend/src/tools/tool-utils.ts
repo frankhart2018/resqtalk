@@ -85,6 +85,7 @@ export const executeToolCall = (
   name: string,
   params: Record<string, unknown>
 ): string | null => {
+  console.log(name, params);
   const tool = TOOLS.filter((tool: Tool) => tool.name === name);
   if (tool.length !== 1) {
     console.error(
