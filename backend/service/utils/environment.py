@@ -10,3 +10,4 @@ LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY", None)
 LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY", None)
 
 MAP_TILE_SERVER = os.getenv("MAP_TILE_SERVER", "https://tile.openstreetmap.org")
+LOAD_PROMPTS_FROM_DB = os.getenv("LOAD_PROMPTS_FROM_DB", "false").lower() == "true"
