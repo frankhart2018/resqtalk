@@ -29,7 +29,6 @@ const registerWavEncoder = async () => {
   if (!encoderRegistered) {
     await register(await connect());
     encoderRegistered = true;
-    console.log("WAV encoder registered.");
   }
 };
 
@@ -70,7 +69,6 @@ const Agent: React.FC = () => {
   }, [messages]);
 
   useEffect(() => {
-    console.log("Recording state updated:", isRecording);
   }, [isRecording]);
 
   /////////////////////////////////////////////////////////////////
@@ -108,11 +106,9 @@ const Agent: React.FC = () => {
   // MODEL CALLING HELPERS
   /////////////////////////////////////////////////////////////////
   const processMessageForToolCalls = (replyData: string) => {
-    console.log("Processing message for tool calls:", replyData);
     if (replyData.trim().startsWith("{") && replyData.trim().endsWith("}")) {
       try {
         const [toolCallResult, toolName] = processToolCallMessages(replyData);
-        console.log(`Tool call result: ${toolCallResult}`);
         if (toolCallResult !== null) {
           if (toolCallResult !== "") {
             replaceLastBotMessage(toolCallResult);
@@ -171,9 +167,6 @@ const Agent: React.FC = () => {
             appendBotMessage(toolCallResult);
           } else {
             // No explicit result message, so don't append a new message.
-            console.log(
-              `Executed tool: ${(toolCall as { name: string }).name}`
-            );
           }
         }
       } catch (error) {
@@ -189,11 +182,9 @@ const Agent: React.FC = () => {
   };
 
   const streamPromptResponse = async (prompt: string): Promise<string> => {
-    console.log("Streaming prompt response:", prompt);
     let replyData = "";
     try {
       const reader = await getTextModeResponse(prompt);
-      console.log("Response reader:", reader);
       if (!reader) {
         throw new Error("No reader available");
       }
@@ -210,7 +201,6 @@ const Agent: React.FC = () => {
     } catch (error: unknown) {
       console.error("Error:", error);
     }
-    console.log("Final reply data:", replyData);
     return replyData;
   };
 
@@ -218,12 +208,10 @@ const Agent: React.FC = () => {
     response: string
   ): [string | null, string] => {
     const parsedResponse = JSON.parse(response);
-    console.log(`Found tool call: ${parsedResponse}`);
     const toolCallResult = executeToolCall(
       parsedResponse["name"],
       parsedResponse["parameters"]
     );
-    console.log(`Tool call result: ${toolCallResult}`);
     return [toolCallResult, parsedResponse["name"]];
   };
 
@@ -259,12 +247,7 @@ const Agent: React.FC = () => {
           );
           if (toolCallResult) {
             appendBotMessage(toolCallResult);
-          } else {
-            // No explicit result message, so don't append a new message.
-            console.log(
-              `Executed tool: ${(toolCall as { name: string }).name}`
-            );
-          }
+          } 
         }
       } catch (error) {
         console.error("Error sending message:", error);

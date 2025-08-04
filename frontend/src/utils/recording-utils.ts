@@ -30,7 +30,6 @@ export const startRecordingAudio = async () => {
     );
 
     mediaRecorder.start();
-    console.log("🎙️ Recording started with type:", mediaRecorder.mimeType);
   } catch (error) {
     console.error("Failed to start recording:", error);
     alert("Microphone permission denied or WAV not supported.");
@@ -43,7 +42,6 @@ export const stopRecordingAudio = (): Promise<Blob | null> =>
 
     mediaRecorder.addEventListener("stop", () => {
       const audioBlob = new Blob(audioBlobs, { type: "audio/wav" });
-      console.log("🎙️ Recording stopped. Blob size:", audioBlob.size);
       if (capturedStream) {
         capturedStream.getTracks().forEach((track) => track.stop());
       }

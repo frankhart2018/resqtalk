@@ -3,7 +3,6 @@ import type { GetChecklistResponse } from "../api/model";
 export const addToList = (params: Record<string, unknown>) => {
   const item = params.item;
   if (typeof item !== 'string' || item.trim() === '') {
-    console.error("Invalid item provided to addToList");
     return;
   }
 

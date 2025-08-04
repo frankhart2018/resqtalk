@@ -79,7 +79,6 @@ const Onboarding = () => {
     const checkUser = async () => {
       try {
         const userDetails = await getUserDetails();
-        console.log("User details:", userDetails);
         if (userDetails) {
           navigate("/begin");
         }

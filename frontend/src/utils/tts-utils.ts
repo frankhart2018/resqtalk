@@ -21,7 +21,5 @@ const getBestVoice = (): SpeechSynthesisVoice => {
 export const playSpeech = (text: string) => {
   const tts = new SpeechSynthesisUtterance(text);
   tts.voice = getBestVoice();
-  console.log(`Using voice: ${tts.voice ? tts.voice.name : "UNK"}`);
-
   window.speechSynthesis.speak(tts);
 };

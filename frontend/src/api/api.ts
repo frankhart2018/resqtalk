@@ -129,7 +129,6 @@ export const getTextModeResponse = async (
       prompt,
     }),
   });
-  console.log("getting text mode response:", response);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
@@ -290,7 +289,6 @@ export const setDisasterContext = async (disasterContext: DisasterContext) => {
     },
     body: JSON.stringify(disasterContext),
   });
-  console.log("Setting disaster context:", response);
   if (!response.ok) {
     const result = await response.json();
     throw new Error(`Setting disaster context failed: ${result.status}`);
@@ -308,7 +306,6 @@ export const getDisasterContext = async (): Promise<DisasterContext> => {
       ...getCfAuthHeaders(),
     },
   }).then((response) => {
-    console.log("Fetching disaster context:", response);
     if (response.ok) {
       return response.json();
     }
@@ -324,7 +321,6 @@ export const deleteDisasterContext = async () => {
       ...getCfAuthHeaders(),
     },
   });
-  console.log("Deleting disaster context:", response);
   if (!response.ok) {
     const result = await response.json();
     throw new Error(`Deleting disaster context failed: ${result.status}`);
