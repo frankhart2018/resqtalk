@@ -165,8 +165,6 @@ const Agent: React.FC = () => {
           );
           if (toolCallResult) {
             appendBotMessage(toolCallResult);
-          } else {
-            // No explicit result message, so don't append a new message.
           }
         }
       } catch (error) {
