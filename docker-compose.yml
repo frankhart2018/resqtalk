@@ -1,24 +1,6 @@
 version: "3.8"
 
 services:
-  backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
-    image: resqtalk-backend
-    environment:
-      OLLAMA_HOST: http://ollama:11434
-      MONGO_HOST: mongodb://mongo:27017/
-    depends_on:
-      - ollama
-      - mongo
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "8080:80"
-    image: resqtalk-frontend
-
   langfuse-worker:
     image: docker.io/langfuse/langfuse-worker:3
     restart: always
