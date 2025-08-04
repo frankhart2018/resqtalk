@@ -6,7 +6,7 @@ import type {
   GetUserDetailsResponse,
   GetMapDownloadStatus as GetMapDownloadStatusResponse,
 } from "../api/model";
-import "./Chatbot.css";
+import "./Agent.css";
 import LocationMap from "../components/LocationMap";
 import "./Maps.css";
 

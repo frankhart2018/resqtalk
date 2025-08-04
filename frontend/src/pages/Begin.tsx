@@ -8,7 +8,7 @@ import {
 import type { GetDisastersResponse } from "../api/model";
 import Navbar from "../components/Navbar";
 import { useTheme } from "../contexts/useTheme";
-import "./Chatbot.css"; // For theme
+import "./Agent.css"; // For theme
 import "./Begin.css";
 
 const Begin: React.FC = () => {

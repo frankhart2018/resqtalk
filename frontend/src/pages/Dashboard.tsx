@@ -9,7 +9,7 @@ const Dashboard: React.FC = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
 
-  const handleChangeDisaster = async () => {
+  const handleUpdatePhase = async () => {
     try {
       await deleteDisasterContext();
       localStorage.removeItem("checklist");
@@ -32,8 +32,8 @@ const Dashboard: React.FC = () => {
           <Link to="/maps" className="dashboard-card">
             <h2>Maps</h2>
           </Link>
-          <Link to="/chat" className="dashboard-card">
-            <h2>Chat</h2>
+          <Link to="/agent" className="dashboard-card">
+            <h2>Agent</h2>
           </Link>
           <Link to="/checklist" className="dashboard-card">
             <h2>Checklist</h2>
@@ -47,8 +47,8 @@ const Dashboard: React.FC = () => {
           <Link to="/sos" className="dashboard-card">
             <h2>SOS Tools</h2>
           </Link>
-          <div onClick={handleChangeDisaster} className="dashboard-card">
-            <h2>Change Disaster</h2>
+          <div onClick={handleUpdatePhase} className="dashboard-card">
+            <h2>Update Phase</h2>
           </div>
         </div>
       </div>

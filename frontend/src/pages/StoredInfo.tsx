@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getUserDetails, getMemories } from "../api/api";
 import type { GetUserDetailsResponse, GetMemoriesResponse } from "../api/model";
-import "./Chatbot.css";
+import "./Agent.css";
 import "./Onboarding.css";
 import "./StoredInfo.css";
 import Navbar from "../components/Navbar";

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, type JSX } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import "./Chatbot.css";
+import "./Agent.css";
 import Navbar from "../components/Navbar";
 import ModeToggle from "../components/ModeToggle";
 import { useTheme } from "../contexts/useTheme";
@@ -33,7 +33,7 @@ const registerWavEncoder = async () => {
   }
 };
 
-const Chatbot: React.FC = () => {
+const Agent: React.FC = () => {
   const { theme } = useTheme();
   const [messages, setMessages] = useState<
     { text: string | JSX.Element; sender: "user" | "bot" }[]
@@ -290,7 +290,7 @@ const Chatbot: React.FC = () => {
   /////////////////////////////////////////////////////////////////
   return (
     <div className={`chatbot ${theme}`}>
-      <Navbar pageTitle="Chat" />
+      <Navbar pageTitle="Agent" />
       <div className="chatbot-messages">
         {messages.map((message, index) => (
           <div key={index} className={`message-container ${message.sender}`}>
@@ -375,4 +375,4 @@ const Chatbot: React.FC = () => {
   );
 };
 
-export default Chatbot;
+export default Agent;

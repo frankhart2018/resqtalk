@@ -18,7 +18,7 @@ import type {
   GetMemoriesResponse,
   GetUserDetailsResponse,
 } from "../api/model";
-import "./Chatbot.css";
+import "./Agent.css";
 import "./GodMode.css";
 
 const GodMode: React.FC = () => {

@@ -1,5 +1,5 @@
 import React from "react";
-import Chatbot from "./pages/Chatbot";
+import Agent from "./pages/Agent";
 import GodMode from "./pages/GodMode";
 import Onboarding from "./pages/Onboarding";
 import Begin from "./pages/Begin";
@@ -89,7 +89,7 @@ const App: React.FC = () => {
       <div className="App">
         <Routes>
           <Route path="/" element={<Navigate to="/onboard" />} />
-          <Route path="/chat" element={<Chatbot />} />
+          <Route path="/agent" element={<Agent />} />
           <Route path="/god" element={<GodMode />} />
           <Route path="/onboard" element={<Onboarding />} />
           <Route path="/begin" element={<Begin />} />
